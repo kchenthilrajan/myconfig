@@ -1,0 +1,35 @@
+set ignorecase
+set hlsearch
+set smartcase
+set incsearch
+set scrolljump=10
+" disable arrow keys
+    map <up> <nop>
+    map <down> <nop>
+    map <left> <nop>
+    map <right> <nop>
+    imap <up> <nop>
+    imap <down> <nop>
+    imap <left> <nop>
+    imap <right> <nop>
+noremap ` gT
+noremap , gt
+" use 4 spaces for tabs
+set tabstop=4 softtabstop=4 shiftwidth=4
+
+" display indentation guides
+set list listchars=tab:❘-,trail:·,extends:»,precedes:«,nbsp:×
+
+" convert spaces to tabs when reading file
+autocmd! bufreadpost * set noexpandtab | retab! 4
+
+" convert tabs to spaces before writing file
+autocmd! bufwritepre * set expandtab | retab! 4
+
+" convert spaces to tabs after writing file (to show guides again)
+autocmd! bufwritepost * set noexpandtab | retab! 4
+set smartindent
+set tabstop=4
+set shiftwidth=4
+set expandtab
+
