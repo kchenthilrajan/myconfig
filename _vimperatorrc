@@ -1,0 +1,9 @@
+set ignorecase
+set hlsearch
+set smartcase
+set incsearch
+set scrolljump=10
+noremap k 10k
+noremap j 10j
+noremap ` gT
+noremap , gt
