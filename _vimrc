@@ -34,9 +34,11 @@ set wildchar=<Tab> wildmenu wildmode=full
 
 if has("gui_running")
 if has("gui_gtk2")
-set guifont=Inconsolata\ 10
+"set guifont=Inconsolata\ 10
+set guifont=Consolas\ for\ Powerline\ FixedD:h9
 elseif has("gui_win32")
-set guifont=Consolas:h10:cANSI
+"set guifont=Consolas:h10:cANSI
+set guifont=Consolas\ for\ Powerline\ FixedD:h9
 endif
 endif
 
@@ -93,14 +95,14 @@ exe curNum . "wincmd w"
 "Hide and open so that we aren't prompted and keep history
 exe 'hide buf' markedBuf
 endfunction
-set nocompatible   " Disable vi-compatibility
-set laststatus=2   " Always show the statusline
-set encoding=utf-8 " Necessary to show Unicode glyphs
+"pathogen
 call pathogen#infect()
+"ctrl-p
 let g:ctrlp_map = '<c-p>'
 let g:ctrlp_cmd = 'CtrlP'
 "folding settings
 set foldmethod=indent   "fold based on indent
+set foldtext=v:folddashes.substitute(getline(v:foldstart-1),'/\\*\\\|\\*/\\\|{{{\\d\\=','','g')
 set foldnestmax=10      "deepest fold is 10 levels
 set nofoldenable        "dont fold by default
 set foldlevel=1         "this is just what i use
@@ -108,8 +110,6 @@ set foldlevel=1         "this is just what i use
 " use 4 spaces for tabs
 set tabstop=4 softtabstop=4 shiftwidth=4
 
-" display indentation guides
-set list listchars=tab:❘-,trail:·,extends:»,precedes:«,nbsp:×
 
 " convert spaces to tabs when reading file
 autocmd! bufreadpost * set noexpandtab | retab! 4
@@ -127,4 +127,15 @@ set expandtab
 nnoremap  <silent>   <tab>  :if &modifiable && !&readonly && &modified <CR> :write<CR> :endif<CR>:bnext<CR>
 nnoremap  <silent> <s-tab>  :if &modifiable && !&readonly && &modified <CR> :write<CR> :endif<CR>:bprevious<CR>
 
+"powerline
+"download the fonts from  https://github.com/eugeneching/consolas-powerline-vim
+"place them in the fonts folder 
+"point your set guifont = Consolas\ for\ Powerline\ FixedD:h9
+set nocompatible " Disable vi-compatibility
+set laststatus=2 " Always show the statusline
+set encoding=utf-8 " Necessary to show Unicode glyphs
+set t_Co=256 " Explicitly tell Vim that the terminal supports 256 colors
+let g:Powerline_symbols = 'fancy'
+" display indentation guides
+set list listchars=tab:❘-,trail:·,extends:»,precedes:«,nbsp:×
 
