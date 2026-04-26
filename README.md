@@ -18,7 +18,7 @@ Personal dotfiles for Neovim, tmux, Zsh (Oh My Zsh + Powerlevel10k), and macOS t
 ### 1. Clone
 
 ```bash
-git clone --recurse-submodules git@github-cisco:kchenthilrajan/myconfig.git ~/myconfig
+git clone --recurse-submodules git@github-personal:kchenthilrajan/myconfig.git ~/myconfig
 ```
 
 > `--recurse-submodules` pulls Powerlevel10k automatically.
