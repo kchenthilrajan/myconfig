@@ -200,5 +200,12 @@ ref() {
   } | fzf --prompt="ref> " --ansi
 }
 
+# iTerm2 transparency control
+function iterm-alpha() {
+  osascript -e "tell application \"iTerm2\" to tell current window to tell current session to set transparency to $1"
+}
+alias transparent='iterm-alpha 0.3'
+alias opaque='iterm-alpha 0'
+
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
