@@ -11,6 +11,7 @@ Personal dotfiles for Neovim, tmux, Zsh (Oh My Zsh + Powerlevel10k), and macOS t
 | `zsh/zshrc` | Zsh config with Oh My Zsh |
 | `zsh/p10k.zsh` | Powerlevel10k prompt config |
 | `zsh/omz-custom/` | Oh My Zsh custom plugins/themes |
+| `w3m/keymap` | w3m browser keybindings (`/`, `n`, `N` search) |
 | `Brewfile` | All Homebrew formulas, casks, and Nerd Fonts |
 
 ## New Machine Setup
@@ -58,6 +59,10 @@ ln -sf ~/myconfig/zsh/p10k.zsh ~/.p10k.zsh
 
 # Oh My Zsh custom (plugins + themes including powerlevel10k)
 ln -sf ~/myconfig/zsh/omz-custom ~/.oh-my-zsh/custom
+
+# w3m keybindings
+mkdir -p ~/.w3m
+ln -sf ~/myconfig/w3m/keymap ~/.w3m/keymap
 ```
 
 ### 6. Set Zsh as default shell (if needed)
