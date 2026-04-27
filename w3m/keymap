@@ -1,0 +1,3 @@
+keymap / SEARCH
+keymap n SEARCH_NEXT
+keymap N SEARCH_PREV
