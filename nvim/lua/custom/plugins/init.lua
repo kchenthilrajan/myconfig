@@ -119,6 +119,7 @@ return {
     },
     keys = {
       { '<leader>t', function() Snacks.terminal.toggle() end, desc = 'Toggle terminal' },
+      { '<C-t>', function() Snacks.terminal.toggle() end, desc = 'Toggle terminal', mode = { 'n', 't' } },
     },
   },
   {
