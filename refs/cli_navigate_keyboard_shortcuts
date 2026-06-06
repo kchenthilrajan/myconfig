@@ -1,0 +1,28 @@
+  Moving around:                                                                                                                               
+  Ctrl+A          — go to beginning of line                                                                                                    
+  Ctrl+E          — go to end of line                                                                                                          
+  Option+←/→      — move word by word (what you already use)                                                                                   
+  Ctrl+←/→        — also moves word by word (in some terminals)                                                                                
+                                                                                                                                               
+  Deleting:                                                                                                                                    
+  Ctrl+W          — delete word backwards                                                                                                      
+  Option+D        — delete word forwards                                                                                                       
+  Ctrl+K          — delete from cursor to end of line                                                                                          
+  Ctrl+U          — delete from cursor to beginning of line                                                                                    
+  Ctrl+H          — delete one character back (like backspace)                                                                                 
+                                                                                                                                               
+  History:                                                                                                                                     
+  Ctrl+R          — search command history (type to filter, Ctrl+R again for next match)                                                       
+  Ctrl+P / ↑      — previous command                                                                                                           
+  Ctrl+N / ↓      — next command                                                                                                               
+  !!              — repeat last command                                                                                                        
+  !$              — last argument of previous command                                                                                          
+                                                                                                                                               
+  Other handy ones:                                                                                                                            
+  Ctrl+L          — clear screen (same as `clear`)                                                                                             
+  Ctrl+C          — cancel current command                                                                                                     
+  Ctrl+Z          — suspend process (bring back with `fg`)                                                                                     
+  Ctrl+D          — exit shell / EOF                                                                                                           
+  Tab             — autocomplete                                                                                                               
+  Tab Tab         — show all completions                                                                                                       
+ 

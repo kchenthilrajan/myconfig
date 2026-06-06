@@ -1,0 +1,284 @@
+# Base PATH (idempotent)
+typeset -U path PATH
+path=(
+  /usr/local/texlive/2026/bin/universal-darwin
+  /opt/homebrew/bin
+  /usr/local/bin
+  $HOME/.local/bin
+  $HOME/.cargo/bin
+  $HOME/.console-ninja/.bin
+  $HOME/.codeium/windsurf/bin
+  /opt/homebrew/opt/gradle@7/bin
+  /usr/local/sbin
+  /usr/local/bin
+  /usr/bin
+  /bin
+  /usr/sbin
+  /sbin
+)
+
+unsetopt BEEP
+HISTFILE=~/.zsh_history
+HISTSIZE=999999999
+SAVEHIST=$HISTSIZE
+export CDO_STAGING_TOKEN=""  # set locally, do not commit
+# >>> claude-code-config >>>
+export CLAUDE_CODE_USE_BEDROCK=1
+export AWS_PROFILE=bedrock_api
+export AWS_REGION=us-east-2
+export ANTHROPIC_MODEL='global.anthropic.claude-sonnet-4-6'
+export ANTHROPIC_DEFAULT_SONNET_MODEL='global.anthropic.claude-sonnet-4-6'
+export ANTHROPIC_DEFAULT_OPUS_MODEL='global.anthropic.claude-opus-4-6-v1'
+export ANTHROPIC_DEFAULT_HAIKU_MODEL='global.anthropic.claude-haiku-4-5-20251001-v1:0'
+export ANTHROPIC_SMALL_FAST_MODEL='global.anthropic.claude-haiku-4-5-20251001-v1:0'
+export BASH_MAX_TIMEOUT_MS=600000
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+export PYENV_ROOT="$HOME/.pyenv"
+[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init -)"
+
+export JAVA_HOME=/Library/Java/JavaVirtualMachines/zulu-11.jdk/Contents/Home
+export SF_PREFIX=/Users/chenthil/Perforce/chenthil_IMS_10_5_MAIN/firepower/ims/IMS_10_5_MAIN/usm/fmc_gwt_ui/builds
+export WORKSPACE=/Users/chenthil/Perforce/chenthil_IMS_10_5_MAIN/firepower/ims/IMS_10_5_MAIN
+# To build GWT UI locally, set the JAVA_HOME to the path of your JDK 8 installation
+# export JAVA_HOME=/Library/Java/JavaVirtualMachines/zulu-8.jdk/Contents/Home
+export GWT_HOME=/opt/homebrew/Cellar/gwt/2.13.0
+
+export M2_REPO="$HOME/.m2/repository/"
+export MAVEN_OPTS="-Djdk.home=$JAVA_HOME -Djdk18u66.64bit.home=$JAVA_HOME -Djdk17u51.64bit.home=$JAVA_HOME -Dmaven.repo.local=$M2_REPO -Xmx1024m -Xms1024m -Dcisco.site=bms"
+export PATH=$PATH:$M2_HOME/bin
+export PATH="$(npm config get prefix)/bin:$PATH"
+
+
+
+# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
+# Initialization code that may require console input (password prompts, [y/n]
+# confirmations, etc.) must go above this block; everything else may go below.
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+fi
+
+# If you come from bash you might have to change your $PATH.
+# export PATH=$HOME/bin:$HOME/.local/bin:/usr/local/bin:$PATH
+
+# Path to your Oh My Zsh installation.
+export ZSH="$HOME/.oh-my-zsh"
+
+# Set name of the theme to load --- if set to "random", it will
+# load a random theme each time Oh My Zsh is loaded, in which case,
+# to know which specific one was loaded, run: echo $RANDOM_THEME
+# See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
+ZSH_THEME="robbyrussell"
+ZSH_THEME="powerlevel10k/powerlevel10k"
+
+# Set list of themes to pick from when loading at random
+# Setting this variable when ZSH_THEME=random will cause zsh to load
+# a theme from this variable instead of looking in $ZSH/themes/
+# If set to an empty array, this variable will have no effect.
+# ZSH_THEME_RANDOM_CANDIDATES=( "robbyrussell" "agnoster" )
+
+# Uncomment the following line to use case-sensitive completion.
+# CASE_SENSITIVE="true"
+
+# Uncomment the following line to use hyphen-insensitive completion.
+# Case-sensitive completion must be off. _ and - will be interchangeable.
+# HYPHEN_INSENSITIVE="true"
+
+# Uncomment one of the following lines to change the auto-update behavior
+# zstyle ':omz:update' mode disabled  # disable automatic updates
+# zstyle ':omz:update' mode auto      # update automatically without asking
+# zstyle ':omz:update' mode reminder  # just remind me to update when it's time
+
+# Uncomment the following line to change how often to auto-update (in days).
+# zstyle ':omz:update' frequency 13
+
+# Uncomment the following line if pasting URLs and other text is messed up.
+# DISABLE_MAGIC_FUNCTIONS="true"
+
+# Uncomment the following line to disable colors in ls.
+# DISABLE_LS_COLORS="true"
+
+# Uncomment the following line to disable auto-setting terminal title.
+# DISABLE_AUTO_TITLE="true"
+
+# Uncomment the following line to enable command auto-correction.
+# ENABLE_CORRECTION="true"
+
+# Uncomment the following line to display red dots whilst waiting for completion.
+# You can also set it to another string to have that shown instead of the default red dots.
+# e.g. COMPLETION_WAITING_DOTS="%F{yellow}waiting...%f"
+# Caution: this setting can cause issues with multiline prompts in zsh < 5.7.1 (see #5765)
+# COMPLETION_WAITING_DOTS="true"
+
+# Uncomment the following line if you want to disable marking untracked files
+# under VCS as dirty. This makes repository status check for large repositories
+# much, much faster.
+# DISABLE_UNTRACKED_FILES_DIRTY="true"
+
+# Uncomment the following line if you want to change the command execution time
+# stamp shown in the history command output.
+# You can set one of the optional three formats:
+# "mm/dd/yyyy"|"dd.mm.yyyy"|"yyyy-mm-dd"
+# or set a custom format using the strftime function format specifications,
+# see 'man strftime' for details.
+# HIST_STAMPS="mm/dd/yyyy"
+
+# Would you like to use another custom folder than $ZSH/custom?
+# ZSH_CUSTOM=/path/to/new-custom-folder
+
+# Which plugins would you like to load?
+# Standard plugins can be found in $ZSH/plugins/
+# Custom plugins may be added to $ZSH_CUSTOM/plugins/
+# Example format: plugins=(rails git textmate ruby lighthouse)
+# Add wisely, as too many plugins slow down shell startup.
+plugins=(git)
+
+source $ZSH/oh-my-zsh.sh
+
+# User configuration
+
+# export MANPATH="/usr/local/man:$MANPATH"
+
+# You may need to manually set your language environment
+# export LANG=en_US.UTF-8
+
+# Preferred editor for local and remote sessions
+# if [[ -n $SSH_CONNECTION ]]; then
+#   export EDITOR='vim'
+# else
+#   export EDITOR='nvim'
+# fi
+
+# Compilation flags
+# export ARCHFLAGS="-arch $(uname -m)"
+
+# Set personal aliases, overriding those provided by Oh My Zsh libs,
+# plugins, and themes. Aliases can be placed here, though Oh My Zsh
+# users are encouraged to define aliases within a top-level file in
+# the $ZSH_CUSTOM folder, with .zsh extension. Examples:
+# - $ZSH_CUSTOM/aliases.zsh
+# - $ZSH_CUSTOM/macos.zsh
+# For a full list of active aliases, run `alias`.
+#
+# Example aliases
+# alias zshconfig="mate ~/.zshrc"
+# alias ohmyzsh="mate ~/.oh-my-zsh"
+
+# fz <file>  OR  cmd | fz — fuzzy search a file or piped input with preview pane
+fz() {
+  local file
+  if [[ ! -t 0 ]]; then
+    # piped input — buffer stdin to a temp file so preview can re-read it
+    file=$(mktemp)
+    cat - > "$file"
+    trap "rm -f $file" EXIT
+  else
+    [[ -z "$1" ]] && { echo "Usage: fz <file>  OR  cmd | fz"; return 1; }
+    file="${1:A}"
+    [[ ! -f "$file" ]] && { echo "fz: not a file: $1"; return 1; }
+  fi
+  awk '{print NR"\t"$0}' "$file" | \
+  fzf --ansi \
+      --delimiter='\t' \
+      --with-nth=2.. \
+      --preview "awk -v n={1} 'NR>=n-4 && NR<=n+12' \"$file\"" \
+      --preview-window=right:55%:wrap | \
+  cut -f2-
+}
+
+# Shortcut file aliases — preview pane shows ~15 lines of context around match
+_ref_file() {
+  local file="${1:A}"
+  awk '{print NR"\t"$0}' "$file" | \
+  fzf --ansi \
+      --delimiter='\t' \
+      --with-nth=2.. \
+      --preview "awk -v n={1} 'NR>=n-4 && NR<=n+12' \"$file\"" \
+      --preview-window=right:55%:wrap | \
+  cut -f2-
+}
+alias nvim-keys="_ref_file ~/myconfig/refs/nvim-shortcuts.md"
+alias tmux-keys="_ref_file ~/myconfig/refs/tmux-shortcuts.md"
+alias shell-cmds="_ref_file ~/myconfig/refs/shell-commands.md"
+alias shell-ex="_ref_file ~/myconfig/refs/shell-exercises.md"
+alias docker-keys="_ref_file ~/myconfig/refs/docker-shortcuts.md"
+alias proj="_ref_file ~/myconfig/refs/project-workflows.md"
+
+prep-ref() {
+  local reset="\e[0m"
+  {
+    for file in ~/myconfig/refs/prep/ref_*.md ~/myconfig/refs/prep/patterns.md ~/myconfig/refs/prep/interview_algorithm_patterns.md ~/myconfig/refs/prep/signals_and_shapes.md ~/myconfig/refs/prep/drill_protocol.md ~/myconfig/refs/prep/invariant_drill.md; do
+      [[ -f "$file" ]] || continue
+      local label="${${file:t}/.md/}"
+      local color="\e[36m"
+      local linenum=0
+      while IFS= read -r line; do
+        (( linenum++ ))
+        [[ -n "$line" ]] && printf "%s\t%d\t${color}[%-28s]${reset} %s\n" "$file" "$linenum" "$label" "$line"
+      done < "$file"
+    done
+  } | fzf --prompt="prep> " --ansi \
+      --delimiter='\t' \
+      --with-nth=3.. \
+      --preview "awk -v n={2} 'NR>=n-4 && NR<=n+12' {1}" \
+      --preview-window=right:55%:wrap | \
+  cut -f3-
+}
+
+# Unified reference search across all shortcut/command files
+unalias ref 2>/dev/null
+ref() {
+  local -a labels colors files
+  labels=(nvim        tmux        shell       consolidated cli-nav     docker      projects   )
+  colors=("\e[35m"    "\e[32m"    "\e[33m"    "\e[34m"     "\e[31m"    "\e[36m"    "\e[93m"   )
+  files=(
+    ~/myconfig/refs/nvim-shortcuts.md
+    ~/myconfig/refs/tmux-shortcuts.md
+    ~/myconfig/refs/shell-commands.md
+    ~/myconfig/refs/commands_consolidated.md
+    ~/myconfig/refs/cli_navigate_keyboard_shortcuts
+    ~/myconfig/refs/docker-shortcuts.md
+    ~/myconfig/refs/project-workflows.md
+  )
+  local reset="\e[0m"
+  {
+    for i in {1..${#labels[@]}}; do
+      local color="${colors[$i]}"
+      local label="${labels[$i]}"
+      local file="${files[$i]:A}"
+      local linenum=0
+      while IFS= read -r line; do
+        (( linenum++ ))
+        [[ -n "$line" ]] && printf "%s\t%d\t${color}[%-12s]${reset} %s\n" "$file" "$linenum" "$label" "$line"
+      done < "$file"
+    done
+  } | fzf --prompt="ref> " --ansi \
+      --delimiter='\t' \
+      --with-nth=3.. \
+      --preview "awk -v n={2} 'NR>=n-4 && NR<=n+12' {1}" \
+      --preview-window=right:55%:wrap | \
+  cut -f3-
+}
+
+alias nvlc='mpv'
+
+# iTerm2 transparency control
+function iterm-alpha() {
+  osascript -e "tell application \"iTerm2\" to tell current window to tell current session to set transparency to $1"
+}
+alias transparent='iterm-alpha 0.3'
+alias opaque='iterm-alpha 0'
+
+# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+
+# bun completions
+[ -s "/Users/chenthil/.bun/_bun" ] && source "/Users/chenthil/.bun/_bun"
+
+# bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
