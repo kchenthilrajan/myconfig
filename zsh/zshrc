@@ -22,16 +22,10 @@ HISTFILE=~/.zsh_history
 HISTSIZE=999999999
 SAVEHIST=$HISTSIZE
 export CDO_STAGING_TOKEN=""  # set locally, do not commit
-# >>> claude-code-config >>>
-export CLAUDE_CODE_USE_BEDROCK=1
-export AWS_PROFILE=bedrock_api
-export AWS_REGION=us-east-2
-export ANTHROPIC_MODEL='global.anthropic.claude-sonnet-4-6'
-export ANTHROPIC_DEFAULT_SONNET_MODEL='global.anthropic.claude-sonnet-4-6'
-export ANTHROPIC_DEFAULT_OPUS_MODEL='global.anthropic.claude-opus-4-6-v1'
-export ANTHROPIC_DEFAULT_HAIKU_MODEL='global.anthropic.claude-haiku-4-5-20251001-v1:0'
-export ANTHROPIC_SMALL_FAST_MODEL='global.anthropic.claude-haiku-4-5-20251001-v1:0'
 export BASH_MAX_TIMEOUT_MS=600000
+
+# Load machine-specific env (work tokens, Bedrock config, etc.) — not committed
+[[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
 
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
