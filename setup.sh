@@ -32,6 +32,13 @@ if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
   RUNZSH=no CHSH=no sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 fi
 
+# 4a. Powerlevel10k theme
+if [[ ! -d "$HOME/.oh-my-zsh/custom/themes/powerlevel10k" ]]; then
+  echo "==> Installing Powerlevel10k theme"
+  git clone --depth=1 https://github.com/romkatv/powerlevel10k.git \
+    "$HOME/.oh-my-zsh/custom/themes/powerlevel10k"
+fi
+
 # 5. Symlinks
 echo "==> Creating symlinks"
 symlink() {
