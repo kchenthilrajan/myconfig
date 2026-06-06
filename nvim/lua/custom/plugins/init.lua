@@ -1,24 +1,46 @@
 return {
   {
+    'nvim-tree/nvim-web-devicons',
+    lazy = false,
+    config = function()
+      require('nvim-web-devicons').setup { default = true }
+    end,
+  },
+  {
     'akinsho/bufferline.nvim',
     version = '*',
     dependencies = 'nvim-tree/nvim-web-devicons',
-    opts = {
-      options = {
-        numbers = 'ordinal', -- shows 1, 2, 3... so <leader>1-9 makes sense
-      },
-    },
+    opts = {},
   },
   {
     'nvim-lualine/lualine.nvim',
     dependencies = { 'nvim-tree/nvim-web-devicons' },
     config = function()
       require('lualine').setup {
+        options = {
+          theme = 'molokai',
+          component_separators = { left = '', right = '' },
+          section_separators   = { left = '', right = '' },
+        },
         sections = {
-          lualine_a = { 'mode' },
-          lualine_b = { 'branch', 'diff', 'diagnostics' },
-          lualine_c = { 'filename' },
-          lualine_x = { 'filetype' },
+          lualine_a = { { 'mode', right_padding = 2 } },
+          lualine_b = {
+            { 'branch',      color = { fg = '#fbb829', gui = 'bold' } },
+            { 'diff',        colored = true },
+            { 'diagnostics', colored = true },
+          },
+          lualine_c = {
+            {
+              function()
+                local clients = vim.lsp.get_clients { bufnr = 0 }
+                if #clients == 0 then return '' end
+                local names = vim.tbl_map(function(c) return c.name end, clients)
+                return ' ' .. table.concat(names, ', ')
+              end,
+              color = { fg = '#68a8e4', gui = 'italic' },
+            },
+          },
+          lualine_x = { { 'filetype', colored = true, icon_only = false } },
           lualine_y = {
             {
               function()
@@ -26,10 +48,11 @@ return {
                 local total = vim.fn.line '$'
                 return cur .. '/' .. total
               end,
+              color = { fg = '#96a6c8' },
             },
-            'progress',
+            { 'progress', color = { fg = '#96a6c8' } },
           },
-          lualine_z = { 'location' },
+          lualine_z = { { 'location', left_padding = 2 } },
         },
       }
     end,
@@ -73,6 +96,13 @@ return {
     'kevinhwang91/nvim-ufo',
     dependencies = 'kevinhwang91/promise-async',
     config = function()
+      vim.opt.foldcolumn = '1'
+      vim.opt.fillchars:append {
+        foldopen  = '▾',
+        foldclose = '▸',
+        fold      = ' ',
+        foldsep   = ' ',
+      }
       require('ufo').setup {
         provider_selector = function(bufnr, filetype, buftype)
           return { 'treesitter', 'indent' }
@@ -81,26 +111,66 @@ return {
     end,
   },
   {
-    'navarasu/onedark.nvim',
-    priority = 1000,
+    'nvim-treesitter/nvim-treesitter-context',
+    opts = {
+      max_lines = 3,
+      trim_scope = 'outer',
+    },
+  },
+  {
+    'ThePrimeagen/harpoon',
+    branch = 'harpoon2',
+    dependencies = { 'nvim-lua/plenary.nvim' },
     config = function()
-      require('onedark').setup { style = 'deep' }
-      require('onedark').load()
-      local function set_highlights()
-        vim.api.nvim_set_hl(0, 'WinSeparator',            { fg = '#f9e2af', bold = true })
-        vim.api.nvim_set_hl(0, 'NormalNC',               { bg = '#2a2b36', fg = '#6b7280' })
-        vim.api.nvim_set_hl(0, 'CursorLine',             { bg = '#2d3550' })
-        vim.api.nvim_set_hl(0, 'Visual',                 { bg = '#3d5a8a', fg = 'NONE' })
-        vim.api.nvim_set_hl(0, 'TelescopeBorder',        { fg = '#89b4fa' })
-        vim.api.nvim_set_hl(0, 'TelescopePromptBorder',  { fg = '#f38ba8' })
-        vim.api.nvim_set_hl(0, 'TelescopeResultsBorder', { fg = '#89b4fa' })
-        vim.api.nvim_set_hl(0, 'TelescopePreviewBorder', { fg = '#a6e3a1' })
-        vim.api.nvim_set_hl(0, 'TelescopePromptTitle',   { fg = '#f38ba8', bold = true })
-        vim.api.nvim_set_hl(0, 'TelescopeResultsTitle',  { fg = '#89b4fa', bold = true })
-        vim.api.nvim_set_hl(0, 'TelescopePreviewTitle',  { fg = '#a6e3a1', bold = true })
-      end
-      set_highlights()
-      vim.api.nvim_create_autocmd('ColorScheme', { callback = set_highlights })
+      local harpoon = require 'harpoon'
+      harpoon:setup()
+
+      vim.keymap.set('n', '<leader>a', function() harpoon:list():add() end,            { desc = 'Harpoon add file' })
+      vim.keymap.set('n', '<leader>h', function() harpoon.ui:toggle_quick_menu(harpoon:list()) end, { desc = 'Harpoon menu' })
+
+      vim.keymap.set('n', '<C-1>', function() harpoon:list():select(1) end, { desc = 'Harpoon file 1' })
+      vim.keymap.set('n', '<C-2>', function() harpoon:list():select(2) end, { desc = 'Harpoon file 2' })
+      vim.keymap.set('n', '<C-3>', function() harpoon:list():select(3) end, { desc = 'Harpoon file 3' })
+      vim.keymap.set('n', '<C-4>', function() harpoon:list():select(4) end, { desc = 'Harpoon file 4' })
+    end,
+  },
+  {
+    'jameswolensky/marker-groups.nvim',
+    dependencies = { 'nvim-lua/plenary.nvim', 'nvim-telescope/telescope.nvim' },
+    config = function()
+      require('marker-groups').setup { picker = 'telescope' }
+    end,
+    keys = {
+      { '<leader>ma',  desc = 'Marker add' },
+      { '<leader>mv',  desc = 'Marker toggle drawer' },
+      { '<leader>mgc', desc = 'Marker group create' },
+      { '<leader>mgl', desc = 'Marker group list' },
+      { '<leader>mgs', desc = 'Marker group select' },
+    },
+  },
+  -- ── Colorschemes (all lazy — only the active one loads) ─────────────
+  { 'catppuccin/nvim', name = 'catppuccin', lazy = true },
+  { 'wurli/cobalt.nvim',              lazy = true },
+  { 'Abstract-IDE/Abstract-cs',       lazy = true },
+  { 'silentium-theme/silentium.nvim', lazy = true },
+  { 'navarasu/onedark.nvim',          lazy = true, opts = { style = 'deep' } },
+  { 'ray-x/aurora',                   lazy = true },
+  { 'marko-cerovac/material.nvim',    lazy = true, config = function() vim.g.material_style = 'darker' end },
+  { 'yonatanperel/lake-dweller.nvim', lazy = true, config = function() require('lake-dweller').setup { variant = 'ocean-dweller' } end },
+  { 'tpope/vim-vividchalk',           lazy = true },
+  { 'christerso/voidlight-lazyvim-theme', lazy = true },
+  { 'f4z3r/gruvbox-material.nvim',    lazy = true },
+  -- ── Active colorscheme ───────────────────────────────────────────────
+  {
+    'srcery-colors/srcery-vim',
+    priority = 1000,
+    lazy = false,
+    config = function()
+      vim.g.srcery_italic = 0
+      vim.cmd.colorscheme 'srcery'
+      vim.opt.cursorline = true
+      vim.api.nvim_set_hl(0, 'CursorLine',   { bg = '#2d2d2d' })
+      vim.api.nvim_set_hl(0, 'CursorLineNr', { fg = '#fbb829', bold = true, bg = '#2d2d2d' })
     end,
   },
   {
@@ -153,6 +223,57 @@ return {
         options = { '-pdf', '-interaction=nonstopmode', '-synctex=1' },
       }
       vim.g.vimtex_imaps_enabled = 0
+    end,
+  },
+  {
+    'mistweaverco/kulala.nvim',
+    ft = { 'http', 'rest' },
+    config = function()
+      require('kulala').setup {
+        default_view = 'body',
+        winbar = true,
+      }
+      vim.keymap.set('n', '<leader>rr', function() require('kulala').run() end,         { desc = 'Run HTTP request' })
+      vim.keymap.set('n', '<leader>ra', function() require('kulala').run_all() end,     { desc = 'Run all HTTP requests' })
+      vim.keymap.set('n', '<leader>rn', function() require('kulala').jump_next() end,   { desc = 'Next HTTP request' })
+      vim.keymap.set('n', '<leader>rp', function() require('kulala').jump_prev() end,   { desc = 'Prev HTTP request' })
+      vim.keymap.set('n', '<leader>rc', function() require('kulala').copy() end,        { desc = 'Copy as curl command' })
+      vim.keymap.set('n', '<leader>ri', function() require('kulala').inspect() end,     { desc = 'Inspect request' })
+      vim.keymap.set('n', '<leader>rf', function() require('kulala').from_curl() end,  { desc = 'Import curl from clipboard → .http' })
+    end,
+  },
+  {
+    'Vigemus/iron.nvim',
+    config = function()
+      require('iron.core').setup {
+        config = {
+          scratch_repl = true,
+          repl_definition = {
+            sh   = { command = { 'bash' } },
+            zsh  = { command = { 'zsh' } },
+            python = { command = { 'python3' } },
+            javascript = { command = { 'node' } },
+          },
+          repl_open_cmd = require('iron.view').split.vertical.botright(0.4),
+        },
+        keymaps = {
+          send_motion   = '<leader>ic',
+          visual_send   = '<leader>ic',
+          send_file     = '<leader>ia',
+          send_line     = '<leader>il',
+          send_until_cursor = '<leader>iu',
+          send_mark     = '<leader>im',
+          cr            = '<leader>i<cr>',
+          interrupt     = '<leader>i<space>',
+          exit          = '<leader>iq',
+          clear         = '<leader>ix',
+        },
+        highlight = { italic = true },
+      }
+      vim.keymap.set('n', '<leader>io', '<cmd>IronRepl<cr>',   { desc = 'Open REPL' })
+      vim.keymap.set('n', '<leader>ir', '<cmd>IronRestart<cr>', { desc = 'Restart REPL' })
+      vim.keymap.set('n', '<leader>if', '<cmd>IronFocus<cr>',  { desc = 'Focus REPL' })
+      vim.keymap.set('n', '<leader>ih', '<cmd>IronHide<cr>',   { desc = 'Hide REPL' })
     end,
   },
 }

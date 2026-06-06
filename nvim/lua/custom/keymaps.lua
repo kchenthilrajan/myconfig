@@ -1,10 +1,19 @@
--- Restore previous session and open neo-tree on startup
+-- Symbol abbreviations (insert mode)
+vim.cmd('iabbrev :right: →')
+vim.cmd('iabbrev :left: ←')
+vim.cmd('iabbrev :up: ↑')
+vim.cmd('iabbrev :down: ↓')
+vim.cmd('iabbrev :tick: ✓')
+vim.cmd('iabbrev :cross: ✗')
+vim.cmd('iabbrev :star: ★')
+vim.cmd('iabbrev :bull: •')
+
+-- Restore previous session on startup
 vim.api.nvim_create_autocmd('VimEnter', {
   callback = function()
     if vim.fn.argc() == 0 then
       require('persistence').load()
     end
-    vim.cmd 'Neotree show'
   end,
   nested = true,
 })
@@ -28,6 +37,7 @@ local function safe_bd()
 end
 
 vim.keymap.set('n', '<leader>bd', safe_bd, { desc = '[B]uffer [d]elete' })
+vim.keymap.set({ 'n', 'i' }, '<C-s>', '<cmd>w<cr><esc>', { desc = 'Save file' })
 vim.api.nvim_create_user_command('Bd', safe_bd, {})
 
 -- Toggle [ ] <-> [x] checkbox (works in .txt or .md)
@@ -100,11 +110,6 @@ vim.keymap.set('n', 'zK', function() require('ufo').peekFoldedLinesUnderCursor()
 vim.keymap.set('n', '<leader>bh', '<cmd>BufferLineCyclePrev<CR>', { desc = '[B]uffer previous' })
 vim.keymap.set('n', '<leader>bl', '<cmd>BufferLineCycleNext<CR>', { desc = '[B]uffer next' })
 
--- Jump to buffer by position
-for i = 1, 9 do
-  vim.keymap.set('n', '<leader>b' .. i, '<cmd>BufferLineGoToBuffer ' .. i .. '<CR>', { desc = '[B]uffer go to ' .. i })
-end
-
 -- Buffer management
 vim.keymap.set('n', '<leader>bp', '<cmd>BufferLineTogglePin<CR>', { desc = '[B]uffer [p]in toggle' })
 vim.keymap.set('n', '<leader>bx', '<cmd>BufferLineCloseOthers<CR>', { desc = '[B]uffer close others' })
@@ -121,3 +126,58 @@ vim.keymap.set('n', '<leader>bn', function()
   -- no normal window found, create a split
   vim.cmd 'vsplit enew'
 end, { desc = 'New empty buffer' })
+
+-- Winbar: show full relative file path at top of each buffer, auto-updates on buffer switch
+vim.opt.winbar = "%{%v:lua.require('custom.winbar').get()%}"
+
+-- Copy full file path to clipboard
+vim.keymap.set('n', '<leader>yp', function()
+  local path = vim.fn.expand '%:p'
+  vim.fn.setreg('+', path)
+  vim.notify('Copied: ' .. path)
+end, { desc = 'Copy full file path to clipboard' })
+
+-- Favorite commands palette — fuzzy pick and run
+local favorites = {
+  { label = 'SuperMaven Start',     cmd = 'SupermavenStart' },
+  { label = 'SuperMaven Stop',      cmd = 'SupermavenStop' },
+  { label = 'Markdown Preview',     cmd = 'MarkdownPreview' },
+  { label = 'Markdown Preview Stop',cmd = 'MarkdownPreviewStop' },
+  { label = 'Lazy Update',          cmd = 'Lazy update' },
+  { label = 'Lazy Sync',            cmd = 'Lazy sync' },
+  { label = 'Iron Open REPL',       cmd = 'IronRepl' },
+  { label = 'Iron Restart REPL',    cmd = 'IronRestart' },
+  { label = 'Diffview Open',        cmd = 'DiffviewOpen' },
+  { label = 'Diffview Close',       cmd = 'DiffviewClose' },
+  { label = 'Diffview File History',cmd = 'DiffviewFileHistory %' },
+  { label = 'Noice Log',            cmd = 'Noice' },
+  { label = 'LSP Info',             cmd = 'LspInfo' },
+  { label = 'LSP Restart',          cmd = 'LspRestart' },
+  { label = 'Format Buffer',        cmd = 'lua vim.lsp.buf.format()' },
+}
+
+vim.keymap.set('n', '<leader>oc', function()
+  local pickers  = require 'telescope.pickers'
+  local finders  = require 'telescope.finders'
+  local conf     = require('telescope.config').values
+  local actions  = require 'telescope.actions'
+  local state    = require 'telescope.actions.state'
+
+  pickers.new({}, {
+    prompt_title = 'Commands',
+    finder = finders.new_table {
+      results = favorites,
+      entry_maker = function(entry)
+        return { value = entry, display = entry.label, ordinal = entry.label }
+      end,
+    },
+    sorter = conf.generic_sorter {},
+    attach_mappings = function(buf, map)
+      actions.select_default:replace(function()
+        actions.close(buf)
+        vim.cmd(state.get_selected_entry().value.cmd)
+      end)
+      return true
+    end,
+  }):find()
+end, { desc = 'Open favorite commands palette' })

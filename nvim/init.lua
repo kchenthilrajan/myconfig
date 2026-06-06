@@ -423,11 +423,17 @@ require('lazy').setup({
         -- },
         -- pickers = {}
         defaults = {
+          initial_mode = 'normal',
           file_ignore_patterns = { 'node_modules', '.git', '.cache' },
           borderchars = { '─', '│', '─', '│', '╭', '╮', '╯', '╰' },
           color_devicons = true,
           prompt_prefix = '  ',
           selection_caret = ' ',
+          mappings = {
+            n = {
+              ['/'] = function() vim.cmd 'startinsert' end,
+            },
+          },
         },
         pickers = {
           buffers = {
@@ -454,6 +460,9 @@ require('lazy').setup({
         extensions = {
           ['ui-select'] = {
             require('telescope.themes').get_dropdown(),
+          },
+          fzf = {
+            case_mode = 'ignore_case',
           },
         },
       }
@@ -847,12 +856,16 @@ require('lazy').setup({
       end,
       formatters_by_ft = {
         lua = { 'stylua' },
-        -- Conform can also run multiple formatters sequentially
-        -- python = { "isort", "black" },
-        --
-        -- You can use 'stop_after_first' to run the first available formatter from the list
         javascript = { 'prettier' },
+        typescript = { 'prettier' },
         json = { 'prettier' },
+        css = { 'prettier' },
+        html = { 'prettier' },
+      },
+      formatters = {
+        prettier = {
+          command = vim.fn.expand '$HOME/.nvm/versions/node/v24.13.1/bin/prettier',
+        },
       },
     },
   },
@@ -986,6 +999,15 @@ require('lazy').setup({
       -- - sd'   - [S]urround [D]elete [']quotes
       -- - sr)'  - [S]urround [R]eplace [)] [']
       require('mini.surround').setup()
+      require('mini.comment').setup({
+        options = {
+          custom_commentstring = function()
+            local cs = vim.bo.commentstring
+            if cs == nil or cs == '' then return '// %s' end
+            return cs
+          end,
+        },
+      })
 
       -- Simple and easy statusline.
       --  You could remove this setup call if you don't like it,
@@ -1038,9 +1060,42 @@ require('lazy').setup({
         additional_vim_regex_highlighting = { 'ruby' },
       },
       indent = { enable = true, disable = { 'ruby' } },
+      incremental_selection = {
+        enable = true,
+        keymaps = {
+          init_selection   = 'gnn',
+          node_incremental = 'grn',
+          node_decremental = 'grc',
+          scope_incremental = 'grs',
+        },
+      },
+      textobjects = {
+        select = {
+          enable = true,
+          lookahead = true,
+          keymaps = {
+            ['af'] = '@function.outer',
+            ['if'] = '@function.inner',
+            ['ac'] = '@class.outer',
+            ['ic'] = '@class.inner',
+            ['aa'] = '@parameter.outer',
+            ['ia'] = '@parameter.inner',
+          },
+        },
+        move = {
+          enable = true,
+          set_jumps = true,
+          goto_next_start     = { [']f'] = '@function.outer', [']c'] = '@class.outer' },
+          goto_previous_start = { ['[f'] = '@function.outer', ['[c'] = '@class.outer' },
+          goto_next_end       = { [']F'] = '@function.outer', [']C'] = '@class.outer' },
+          goto_previous_end   = { ['[F'] = '@function.outer', ['[C'] = '@class.outer' },
+        },
+      },
     },
-    -- There are additional nvim-treesitter modules that you can use to interact
-    -- with nvim-treesitter. You should go explore a few and see what interests you:
+    dependencies = {
+      'nvim-treesitter/nvim-treesitter-context',
+      'nvim-treesitter/nvim-treesitter-textobjects',
+    },
     --
     --    - Incremental selection: Included, see `:help nvim-treesitter-incremental-selection-mod`
     --    - Show your current context: https://github.com/nvim-treesitter/nvim-treesitter-context
