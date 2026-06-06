@@ -62,9 +62,16 @@ fi
 echo "==> Setting up fzf shell integration"
 "$(brew --prefix)/opt/fzf/install" --key-bindings --completion --no-update-rc --no-bash --no-fish 2>/dev/null || true
 
+# 8. Claude Code
+if ! command -v claude &>/dev/null; then
+  echo "==> Installing Claude Code"
+  npm install -g @anthropic-ai/claude-code
+fi
+
 echo ""
 echo "Done! Next steps:"
 echo "  1. source ~/.zshrc"
 echo "  2. Open tmux and press prefix + I to install tmux plugins"
 echo "  3. Open nvim — Lazy will auto-install plugins on first launch"
 echo "  4. Set iTerm2 profile and import settings manually"
+echo "  5. Run 'claude' and log in to authenticate Claude Code"
