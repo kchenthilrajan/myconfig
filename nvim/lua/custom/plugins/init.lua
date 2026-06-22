@@ -148,35 +148,36 @@ return {
       { '<leader>mgs', desc = 'Marker group select' },
     },
   },
-  -- ── Colorschemes (all lazy — only the active one loads) ─────────────
-  { 'catppuccin/nvim', name = 'catppuccin', lazy = true },
-  { 'wurli/cobalt.nvim',              lazy = true },
-  { 'Abstract-IDE/Abstract-cs',       lazy = true },
-  { 'silentium-theme/silentium.nvim', lazy = true },
-  { 'navarasu/onedark.nvim',          lazy = true, opts = { style = 'deep' } },
-  { 'ray-x/aurora',                   lazy = true },
-  { 'marko-cerovac/material.nvim',    lazy = true, config = function() vim.g.material_style = 'darker' end },
-  { 'yonatanperel/lake-dweller.nvim', lazy = true, config = function() require('lake-dweller').setup { variant = 'ocean-dweller' } end },
-  { 'tpope/vim-vividchalk',           lazy = true },
-  { 'christerso/voidlight-lazyvim-theme', lazy = true },
-  { 'f4z3r/gruvbox-material.nvim',    lazy = true },
+  -- ── Colorschemes (lazy = false so all appear in :colorscheme / Telescope
+  --    completion; they only apply their highlights when selected) ─────────
+  { 'catppuccin/nvim', name = 'catppuccin', lazy = false },
+  { 'wurli/cobalt.nvim',              lazy = false },
+  { 'silentium-theme/silentium.nvim', lazy = false },
+  { 'navarasu/onedark.nvim',          lazy = false, opts = { style = 'deep' } },
+  { 'ray-x/aurora',                   lazy = false },
+  { 'marko-cerovac/material.nvim',    lazy = false, config = function() vim.g.material_style = 'darker' end },
+  { 'yonatanperel/lake-dweller.nvim', lazy = false, config = function() require('lake-dweller').setup { variant = 'ocean-dweller' } end },
+  { 'tpope/vim-vividchalk',           lazy = false },
+  { 'christerso/voidlight-lazyvim-theme', lazy = false },
+  { 'f4z3r/gruvbox-material.nvim',    lazy = false },
+  { 'mhartington/oceanic-next',       lazy = false },                          -- :colorscheme OceanicNext
+  { 'Shatur/neovim-ayu',              lazy = false, name = 'ayu' },             -- :colorscheme ayu
+  { 'ellisonleao/gruvbox.nvim',       lazy = false },                          -- :colorscheme gruvbox
+  { 'srcery-colors/srcery-vim',       lazy = false, init = function() vim.g.srcery_italic = 0 end }, -- :colorscheme srcery
   -- ── Active colorscheme ───────────────────────────────────────────────
   {
-    'srcery-colors/srcery-vim',
+    'Abstract-IDE/Abstract-cs',
     priority = 1000,
     lazy = false,
     config = function()
-      vim.g.srcery_italic = 0
-      vim.cmd.colorscheme 'srcery'
-      vim.opt.cursorline = true
-      vim.api.nvim_set_hl(0, 'CursorLine',   { bg = '#2d2d2d' })
-      vim.api.nvim_set_hl(0, 'CursorLineNr', { fg = '#fbb829', bold = true, bg = '#2d2d2d' })
+      vim.cmd.colorscheme 'abscs'
+      vim.opt.cursorline = true -- let abscs define CursorLine / CursorLineNr colors
     end,
   },
   {
     'supermaven-inc/supermaven-nvim',
     config = function()
-      require('supermaven-nvim').setup {}
+      require('supermaven-nvim').setup { disable_inline_completion = true }
     end,
   },
   {

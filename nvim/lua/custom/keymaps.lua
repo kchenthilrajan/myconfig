@@ -91,6 +91,17 @@ vim.api.nvim_create_autocmd('QuitPre', {
 })
 
 
+-- JS/TS: disable all computed indentexpr; rely on autoindent (copies previous line)
+-- Vim's built-in javascript.vim and treesitter both return 0 for some class-body lines
+vim.api.nvim_create_autocmd('FileType', {
+  pattern = { 'javascript', 'typescript', 'javascriptreact', 'typescriptreact' },
+  callback = function()
+    vim.opt_local.indentexpr = ''
+    vim.opt_local.cindent = false
+    vim.opt_local.smartindent = false
+  end,
+})
+
 -- Reset terminal keypad mode when leaving nvim
 vim.api.nvim_create_autocmd('VimLeave', {
   callback = function()

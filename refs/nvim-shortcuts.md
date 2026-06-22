@@ -265,7 +265,7 @@ Content-Type: application/json
 | `gc5j`           | Toggle comment on next 5 lines                  |
 | `gc` (visual)    | Toggle comment on selected lines                |
 
-## Search & Replace
+## Search & Replace (Find and Replace)
 | Command                  | Action                                              |
 |--------------------------|-----------------------------------------------------|
 | `:%s/old/new/g`          | Replace all occurrences in file                     |
