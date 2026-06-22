@@ -267,6 +267,106 @@ function iterm-alpha() {
 alias transparent='iterm-alpha 0.3'
 alias opaque='iterm-alpha 0'
 
+lc() {
+  local file="$HOME/interview-company-wise-problems/master/lc-problems.md"
+  [[ ! -f "$file" ]] && echo "Not found: $file" && return 1
+  local selection
+  selection=$(grep "^## LC-" "$file" | sed 's/^## //' | \
+    fzf --prompt="lc> " --ansi --height=90% \
+      --preview "
+        num=\$(echo {} | grep -oE 'LC-[0-9]+')
+        awk -v n=\"\$num \" '/^## LC-/{if(f)exit} index(\$0,n)&&/^## LC-/{f=1} f' \"$file\"
+      " \
+      --preview-window=right:60%:wrap)
+  [[ -z "$selection" ]] && return
+  local num=$(echo "$selection" | grep -oE 'LC-[0-9]+')
+  echo ""
+  awk -v n="$num " '/^## LC-/{if(f)exit} index($0,n)&&/^## LC-/{f=1} f' "$file"
+  echo ""
+}
+
+mdview() {
+  local term=0 generate=0
+  while [[ "$1" == "-t" || "$1" == "-g" ]]; do
+    [[ "$1" == "-t" ]] && term=1
+    [[ "$1" == "-g" ]] && generate=1
+    shift
+  done
+  local file=$(realpath "${1:?usage: mdview [-t|-g] <file>}")
+  local ext="${file##*.}"
+  local tmp="/tmp/mdview_$$.html"
+  local style='<style>body{max-width:860px;margin:40px auto;padding:0 24px;font-family:-apple-system,sans-serif;line-height:1.6;color:#333}body.full{max-width:none;margin:40px 24px}pre{background:#f6f8fa;padding:1em;overflow-x:auto;border-radius:6px}code{background:#f6f8fa;padding:.2em .4em;border-radius:3px}h1,h2,h3{border-bottom:1px solid #eee;padding-bottom:.3em}table{border-collapse:collapse}td,th{border:1px solid #ddd;padding:6px 12px}#toggle{position:fixed;top:12px;right:16px;padding:5px 12px;font-size:13px;cursor:pointer;background:#fff;border:1px solid #ccc;border-radius:6px;z-index:999}</style><button id="toggle" onclick="document.body.classList.toggle('"'"'full'"'"');this.textContent=document.body.classList.contains('"'"'full'"'"')?'"'"'Centered'"'"':'"'"'Full Width'"'"'">Full Width</button>'
+  if [[ "$ext" == "md" ]]; then
+    pandoc --standalone -V "header-includes=$style" \
+      --metadata title="$(basename "$file")" \
+      -o "$tmp" "$file"
+  else
+    { printf '```%s\n' "$ext"; cat "$file"; printf '\n```\n'; } \
+      | pandoc --standalone -f markdown --highlight-style=tango \
+        -V "header-includes=$style" \
+        --metadata title="$(basename "$file")" \
+        -o "$tmp"
+  fi
+  if [[ $generate -eq 1 ]]; then
+    echo "$tmp"
+  elif [[ $term -eq 1 ]]; then
+    w3m "$tmp"
+  else
+    open "$tmp"
+  fi
+}
+
+# Live fuzzy search for notes (.md/.txt) across scattered directories.
+# No index to maintain — re-scans the filesystem on every call, so newly
+# added files show up immediately. Prints absolute path + copies to clipboard.
+mdf() {
+  local roots=(
+    ~/interview-company-wise-problems
+    ~/ResumeDrill
+    ~/experience-narrative
+    ~/resume
+    ~/backup
+  )
+  # Display "filename<TAB>path" (name first so it isn't buried in long paths),
+  # but keep the full path as the value returned to callers (mdo/mdt/mdtshell).
+  local fzf_args=(--prompt="mdf> " --height=90% --ansi \
+    --delimiter='\t' --with-nth=1,2 \
+    --preview 'bat --color=always --style=plain --line-range :80 {2}' \
+    --preview-window=right:60%:wrap)
+  [[ "$1" == "--multi" ]] && fzf_args+=(--multi)
+  local selection
+  selection=$(find "${roots[@]}" \( -name '*.md' -o -name '*.txt' \) -not -path '*/node_modules/*' 2>/dev/null | \
+    awk -F/ '{printf "\033[36m%s\033[0m\t%s\n", $NF, $0}' | \
+    fzf "${fzf_args[@]}")
+  [[ -z "$selection" ]] && return 1
+  local files
+  files=$(echo "$selection" | cut -f2)
+  echo "$files"
+  echo "$files" | head -1 | tr -d '\n' | pbcopy
+}
+
+# Fuzzy-find a note and open it directly in mdview
+alias mdo='mdview "$(mdf)"'
+
+# Fuzzy-find one or more notes (Tab to multi-select) and open all as w3m tabs
+mdt() {
+  local files
+  files=$(mdf --multi) || return 1
+  local htmls=()
+  while IFS= read -r f; do
+    [[ -n "$f" ]] && htmls+=("$(mdview -g "$f")")
+  done <<< "$files"
+  w3m -N "${htmls[@]}"
+}
+
+# Used from inside a running w3m session via the `@` (READ_SHELL) key:
+# fuzzy-pick a note and load it as the page content — w3m's ":e" equivalent.
+mdtshell() {
+  local f
+  f=$(mdf) || return 1
+  cat "$(mdview -g "$f")"
+}
+
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
