@@ -176,34 +176,20 @@
 4. Visual select multiple lines → `<leader>ic` to run the block
 5. Output appears live in the REPL pane
 
-## kulala.nvim (HTTP client — .http files)
-| Key            | Action                                      |
-|----------------|---------------------------------------------|
-| `<leader>rr`   | Run request under cursor                    |
-| `<leader>ra`   | Run all requests in file                    |
-| `<leader>rn`   | Jump to next request                        |
-| `<leader>rp`   | Jump to previous request                    |
-| `<leader>rc`   | Copy request as curl command                |
-| `<leader>ri`   | Inspect request (show resolved vars)        |
-| `<leader>rf`   | Import curl from clipboard → .http format   |
-
-### .http file format
-```
-### Request name
-GET https://api.example.com/users
-Authorization: Bearer {{TOKEN}}
-
-### POST example
-POST https://api.example.com/users
-Content-Type: application/json
-
-{
-  "name": "chenthil"
-}
-```
-- Separate requests with `###`
-- Use `{{VAR}}` for variables from `.env` file in project root
-- Works on `.http` or `.rest` files
+### Gotchas / golden rules
+- **Run a whole script:** use `<leader>ia` (send file), not line-by-line. Each send
+  is evaluated as one standalone statement in a shared scope — sending fragments
+  (a `for(...)` header, a function's args) → `ReferenceError`.
+- **Define ≠ run:** sending `function foo(){...}` only *defines* it. You must also
+  send a call (`foo()`) — and the definition must be sent *before* the call.
+  Send a whole function with `<leader>ic` then `af` (around-function textobject).
+- **"Identifier X has already been declared" / stale results:** `const`/`let` can't
+  be re-declared in the same session, so re-sending silently keeps the OLD value →
+  phantom wrong output. Reflex: **`<leader>ir` (restart) then `<leader>ia`** to re-run clean.
+- **Hide vs quit:** `<leader>ih` hides the split but keeps the process + all
+  variables alive (`<leader>io` reopens, state intact). `<leader>iq` kills the
+  process (state lost). `<leader>ix` only clears the screen, not the scope.
+- REPL language follows the **buffer you send from** (`.js`→node, `.py`→python3).
 
 ## Snacks Terminal
 | Key            | Action                                                        |
