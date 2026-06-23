@@ -134,20 +134,6 @@ return {
       vim.keymap.set('n', '<C-4>', function() harpoon:list():select(4) end, { desc = 'Harpoon file 4' })
     end,
   },
-  {
-    'jameswolensky/marker-groups.nvim',
-    dependencies = { 'nvim-lua/plenary.nvim', 'nvim-telescope/telescope.nvim' },
-    config = function()
-      require('marker-groups').setup { picker = 'telescope' }
-    end,
-    keys = {
-      { '<leader>ma',  desc = 'Marker add' },
-      { '<leader>mv',  desc = 'Marker toggle drawer' },
-      { '<leader>mgc', desc = 'Marker group create' },
-      { '<leader>mgl', desc = 'Marker group list' },
-      { '<leader>mgs', desc = 'Marker group select' },
-    },
-  },
   -- ── Colorschemes (lazy = false so all appear in :colorscheme / Telescope
   --    completion; they only apply their highlights when selected) ─────────
   { 'catppuccin/nvim', name = 'catppuccin', lazy = false },
@@ -176,6 +162,7 @@ return {
   },
   {
     'supermaven-inc/supermaven-nvim',
+    enabled = false, -- off until LeetCode practice; flip to true (or remove) to re-enable
     config = function()
       require('supermaven-nvim').setup { disable_inline_completion = true }
     end,
@@ -205,13 +192,13 @@ return {
     },
     opts = {},
   },
+  -- In-terminal rendered markdown (headings/code/tables/lists). Pairs with the
+  -- global cursorline for a w3m-like read with current-line highlight (`mdview -n`).
   {
-    'iamcco/markdown-preview.nvim',
-    cmd = { 'MarkdownPreview', 'MarkdownPreviewStop', 'MarkdownPreviewToggle' },
+    'MeanderingProgrammer/render-markdown.nvim',
     ft = { 'markdown' },
-    build = function()
-      vim.fn['mkdp#util#install']()
-    end,
+    dependencies = { 'nvim-treesitter/nvim-treesitter', 'nvim-tree/nvim-web-devicons' },
+    opts = {},
   },
   {
     'lervag/vimtex',
@@ -224,23 +211,6 @@ return {
         options = { '-pdf', '-interaction=nonstopmode', '-synctex=1' },
       }
       vim.g.vimtex_imaps_enabled = 0
-    end,
-  },
-  {
-    'mistweaverco/kulala.nvim',
-    ft = { 'http', 'rest' },
-    config = function()
-      require('kulala').setup {
-        default_view = 'body',
-        winbar = true,
-      }
-      vim.keymap.set('n', '<leader>rr', function() require('kulala').run() end,         { desc = 'Run HTTP request' })
-      vim.keymap.set('n', '<leader>ra', function() require('kulala').run_all() end,     { desc = 'Run all HTTP requests' })
-      vim.keymap.set('n', '<leader>rn', function() require('kulala').jump_next() end,   { desc = 'Next HTTP request' })
-      vim.keymap.set('n', '<leader>rp', function() require('kulala').jump_prev() end,   { desc = 'Prev HTTP request' })
-      vim.keymap.set('n', '<leader>rc', function() require('kulala').copy() end,        { desc = 'Copy as curl command' })
-      vim.keymap.set('n', '<leader>ri', function() require('kulala').inspect() end,     { desc = 'Inspect request' })
-      vim.keymap.set('n', '<leader>rf', function() require('kulala').from_curl() end,  { desc = 'Import curl from clipboard → .http' })
     end,
   },
   {
