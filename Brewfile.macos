@@ -1,0 +1,31 @@
+# macOS-only formulas and casks. Installed by setup.sh in addition to the
+# shared Brewfile — on Linux, the equivalents install natively via apt
+# instead (see setup.sh and README's "Linux (Mint) notes").
+
+tap "zegervdv/zathura"
+
+# PDF / docs
+brew "zegervdv/zathura/zathura"
+brew "zegervdv/zathura/zathura-pdf-poppler"
+
+# Docker daemon — colima runs it in a lightweight Linux VM on macOS
+brew "colima"
+brew "docker"
+
+# Fonts (Nerd Fonts for nvim icons)
+cask "font-hack-nerd-font"
+cask "font-jetbrains-mono-nerd-font"
+cask "font-meslo-lg-nerd-font"
+cask "font-roboto"
+cask "font-source-code-pro"
+cask "font-source-sans-3"
+
+# Apps
+cask "iterm2"
+cask "skim"
+cask "mactex"
+
+# Java SDKs
+cask "zulu@8"
+cask "zulu@11"
+cask "zulu@21"

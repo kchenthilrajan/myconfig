@@ -1,5 +1,3 @@
-tap "zegervdv/zathura"
-
 # Shell & terminal utilities
 brew "bat"
 brew "eza"
@@ -38,15 +36,8 @@ brew "pipx"
 brew "poetry"
 brew "yarn"
 
-# Java
-brew "openjdk@11"
-brew "ant"
-brew "maven"
-brew "gwt"
-
-# Containers & k8s
-brew "colima"
-brew "docker"
+# Containers & k8s (the Docker daemon itself is installed natively per-OS —
+# colima/docker below on macOS, Docker Engine via apt in setup.sh on Linux)
 brew "kind"
 brew "kubernetes-cli"
 
@@ -58,24 +49,7 @@ brew "yt-dlp"
 # AI
 brew "ollama"
 
-# PDF / docs
-brew "zegervdv/zathura/zathura"
-brew "zegervdv/zathura/zathura-pdf-poppler"
-
-# Fonts (Nerd Fonts for nvim icons)
-cask "font-hack-nerd-font"
-cask "font-jetbrains-mono-nerd-font"
-cask "font-meslo-lg-nerd-font"
-cask "font-roboto"
-cask "font-source-code-pro"
-cask "font-source-sans-3"
-
-# Apps
-cask "iterm2"
-cask "skim"
-cask "mactex"
-
-# Java SDKs
-cask "zulu@8"
-cask "zulu@11"
-cask "zulu@21"
+# macOS-only formulas/casks (fonts, iTerm2, JDKs, zathura, colima+docker) live
+# in Brewfile.macos instead — this installed Homebrew's `brew bundle` doesn't
+# support on_macos/on_linux DSL blocks, so setup.sh runs the two files
+# separately based on OS rather than branching inside one Brewfile.
