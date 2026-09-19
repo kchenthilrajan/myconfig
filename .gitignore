@@ -1,1 +1,4 @@
 test.js
+__pycache__/
+crashreport.txt
+package-lock.json
