@@ -104,6 +104,12 @@ vim.opt.number = true
 --  Experiment for yourself to see if you like it!
 -- vim.opt.relativenumber = true
 
+-- True 24-bit color. Without this, close hex shades (e.g. bufferline's
+-- active-buffer highlight) get approximated to the same terminal-256
+-- palette entry and the contrast disappears. tmux.conf already passes
+-- truecolor through (`Tc` terminal-override), so this was the missing half.
+vim.opt.termguicolors = true
+
 -- Enable mouse mode, can be useful for resizing splits for example!
 vim.opt.mouse = 'a'
 
@@ -424,11 +430,26 @@ require('lazy').setup({
         -- pickers = {}
         defaults = {
           initial_mode = 'normal',
-          file_ignore_patterns = { 'node_modules', '.git', '.cache' },
+          file_ignore_patterns = {
+            'node_modules',
+            '%.git/',
+            '%.cache',
+            '%.class$',
+            '%.jar$',
+            '%.o$',
+            '%.obj$',
+            '%.so$',
+            '%.dylib$',
+            '%.dll$',
+            '%.exe$',
+            '%.pyc$',
+            '%.pyo$',
+            '%.a$',
+          },
           borderchars = { '─', '│', '─', '│', '╭', '╮', '╯', '╰' },
           color_devicons = true,
           prompt_prefix = '  ',
-          selection_caret = ' ',
+          selection_caret = '▶ ',
           mappings = {
             n = {
               ['/'] = function() vim.cmd 'startinsert' end,
@@ -471,6 +492,18 @@ require('lazy').setup({
       pcall(require('telescope').load_extension, 'fzf')
       pcall(require('telescope').load_extension, 'ui-select')
 
+      -- Make the selected row clearly highlighted and the fuzzy-matched chars
+      -- pop. Re-applied on every ColorScheme change so it survives the live
+      -- colorscheme preview picker and any scheme switch.
+      local function telescope_hl()
+        vim.api.nvim_set_hl(0, 'TelescopeSelection', { link = 'Visual' })
+        vim.api.nvim_set_hl(0, 'TelescopeSelectionCaret', { link = 'WarningMsg' })
+        local special = vim.api.nvim_get_hl(0, { name = 'Special' })
+        vim.api.nvim_set_hl(0, 'TelescopeMatching', { fg = special.fg, bold = true })
+      end
+      telescope_hl()
+      vim.api.nvim_create_autocmd('ColorScheme', { callback = telescope_hl })
+
       -- See `:help telescope.builtin`
       local builtin = require 'telescope.builtin'
 
@@ -493,18 +526,82 @@ require('lazy').setup({
       vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = '[S]earch [H]elp' })
       vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = '[S]earch [K]eymaps' })
       vim.keymap.set('n', '<leader>sf', function()
-        builtin.find_files {
-          path_display = { 'filename_first' },
+        -- Custom finder (not builtin.find_files) so each entry can show its
+        -- mtime and the list starts sorted newest-first. With Telescope's
+        -- default sorting_strategy = 'descending', newest-first in the source
+        -- table renders at the BOTTOM of the results, next to the prompt.
+        local finders = require 'telescope.finders'
+        local pickers = require 'telescope.pickers'
+        local conf = require('telescope.config').values
+        local entry_display = require 'telescope.pickers.entry_display'
+
+        local ignore_patterns = {
+          'node_modules', '%.git/', '%.cache', '%.class$', '%.jar$', '%.o$',
+          '%.obj$', '%.so$', '%.dylib$', '%.dll$', '%.exe$', '%.pyc$', '%.pyo$', '%.a$',
+        }
+        local function is_ignored(path)
+          for _, pat in ipairs(ignore_patterns) do
+            if path:match(pat) then
+              return true
+            end
+          end
+          return false
+        end
+
+        local files = vim.fn.systemlist { 'rg', '--files', '--hidden', '--glob', '!.git' }
+        local entries = {}
+        for _, f in ipairs(files) do
+          if not is_ignored(f) then
+            local stat = vim.loop.fs_stat(f)
+            if stat then
+              table.insert(entries, { path = f, mtime = stat.mtime.sec })
+            end
+          end
+        end
+        table.sort(entries, function(a, b) return a.mtime > b.mtime end)
+
+        local displayer = entry_display.create {
+          separator = ' ',
+          items = { { remaining = true }, { width = 16 } },
+        }
+
+        pickers.new({}, {
+          prompt_title = 'Find Files (by modified time)',
+          sorting_strategy = 'descending',
+          finder = finders.new_table {
+            results = entries,
+            entry_maker = function(raw)
+              local date = os.date('%Y-%m-%d %H:%M', raw.mtime)
+              return {
+                value = raw,
+                ordinal = raw.path,
+                path = raw.path,
+                filename = raw.path,
+                display = function(entry)
+                  return displayer { entry.path, date }
+                end,
+              }
+            end,
+          },
+          sorter = conf.file_sorter {},
+          attach_mappings = function(_, map)
+            map('n', '<C-o>', open_all_marked)
+            map('i', '<C-o>', open_all_marked)
+            return true
+          end,
+        }):find()
+      end, { desc = '[S]earch [F]iles (by mtime)' })
+      vim.keymap.set('n', '<leader>ss', builtin.builtin, { desc = '[S]earch [S]elect Telescope' })
+      vim.keymap.set('n', '<leader>sw', builtin.grep_string, { desc = '[S]earch current [W]ord' })
+      vim.keymap.set('n', '<leader>sg', function()
+        builtin.live_grep {
           attach_mappings = function(_, map)
             map('n', '<C-o>', open_all_marked)
             map('i', '<C-o>', open_all_marked)
             return true
           end,
         }
-      end, { desc = '[S]earch [F]iles' })
-      vim.keymap.set('n', '<leader>ss', builtin.builtin, { desc = '[S]earch [S]elect Telescope' })
-      vim.keymap.set('n', '<leader>sw', builtin.grep_string, { desc = '[S]earch current [W]ord' })
-      vim.keymap.set('n', '<leader>sg', builtin.live_grep, { desc = '[S]earch by [G]rep' })
+      end, { desc = '[S]earch by [G]rep' })
       vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = '[S]earch [D]iagnostics' })
       vim.keymap.set('n', '<leader>sr', builtin.resume, { desc = '[S]earch [R]esume' })
       vim.keymap.set('n', '<leader>s.', function()
@@ -515,6 +612,8 @@ require('lazy').setup({
       end, { desc = '[S]earch Recent Files in cwd' })
       vim.keymap.set('n', '<leader><leader>', function()
         builtin.buffers {
+          path_display = { 'filename_first' },
+          sort_lastused = true, -- most-recently-used buffer at the bottom, next to the prompt
           attach_mappings = function(_, map)
             local actions = require 'telescope.actions'
             map('n', '<C-d>', actions.delete_buffer)
@@ -760,6 +859,15 @@ require('lazy').setup({
         ts_ls = {},
         --
 
+        jdtls = {
+          -- jdtls itself needs JDK 17+ to run, but JAVA_HOME is pinned to
+          -- Zulu 11 in zshrc for Maven builds elsewhere, so override just
+          -- for this server process.
+          cmd_env = {
+            JAVA_HOME = '/Library/Java/JavaVirtualMachines/zulu-21.jdk/Contents/Home',
+          },
+        },
+
         lua_ls = {
           -- cmd = { ... },
           -- filetypes = { ... },
@@ -809,6 +917,11 @@ require('lazy').setup({
           end,
         },
       }
+
+      -- mason-lspconfig auto-enables installed servers via vim.lsp.enable(),
+      -- which bypasses the handlers table above, so overrides like jdtls's
+      -- cmd_env need to be registered here too.
+      vim.lsp.config('jdtls', servers.jdtls)
     end,
   },
 
@@ -832,7 +945,10 @@ require('lazy').setup({
         -- Disable "format_on_save lsp_fallback" for languages that don't
         -- have a well standardized coding style. You can add additional
         -- languages here or re-enable it for the disabled ones.
-        local disable_filetypes = { c = true, cpp = true, javascript = true, javascriptreact = true, typescript = true, typescriptreact = true }
+        -- java: jdtls's formatter also rewrites the import block on an
+        -- unmanaged/loose-file project, and can drop imports it hasn't
+        -- caught up to yet (e.g. TreeSet vanishing right after typing it).
+        local disable_filetypes = { c = true, cpp = true, javascript = true, javascriptreact = true, typescript = true, typescriptreact = true, java = true }
         if disable_filetypes[vim.bo[bufnr].filetype] then
           return nil
         else
@@ -848,13 +964,15 @@ require('lazy').setup({
         typescript = { 'prettier' },
         json = { 'prettier' },
         css = { 'prettier' },
+        scss = { 'prettier' },
+        less = { 'prettier' },
         html = { 'prettier' },
+        markdown = { 'prettier' },
+        yaml = { 'prettier' },
       },
-      formatters = {
-        prettier = {
-          command = vim.fn.expand '$HOME/.nvm/versions/node/v24.13.1/bin/prettier',
-        },
-      },
+      -- No hardcoded prettier path: conform resolves `prettier` from the
+      -- project's node_modules/.bin first, then PATH (global npm). This
+      -- survives node/nvm version bumps that move the binary.
     },
   },
 
@@ -918,6 +1036,13 @@ require('lazy').setup({
         -- See :h blink-cmp-config-keymap for defining your own keymap
         preset = 'default',
 
+        -- Ctrl-K collides with Vim's built-in digraph input (i_CTRL-K, e.g.
+        -- Ctrl-K S* -> Σ) since blink.cmp's expr-mapping fallback can't
+        -- restore genuinely built-in key behavior, only other keymaps.
+        -- Free it up and move signature help to Ctrl-J instead.
+        ['<C-k>'] = false,
+        ['<C-j>'] = { 'show_signature', 'hide_signature', 'fallback' },
+
         -- For more advanced Luasnip keymaps (e.g. selecting choice nodes, expansion) see:
         --    https://github.com/L3MON4D3/LuaSnip?tab=readme-ov-file#keymaps
       },
@@ -931,6 +1056,9 @@ require('lazy').setup({
       completion = {
         menu = { auto_show = false },
         documentation = { auto_show = false, auto_show_delay_ms = 500 },
+        -- Accepting a function from the menu inserts its () and drops the
+        -- cursor inside, ready to type args (signature help then guides you).
+        accept = { auto_brackets = { enabled = true } },
       },
 
       sources = {
@@ -954,16 +1082,6 @@ require('lazy').setup({
       -- Shows a signature help window while you type arguments for a function
       signature = { enabled = true },
     },
-  },
-
-  { -- You can easily change to a different colorscheme.
-    -- Change the name of the colorscheme plugin below, and then
-    -- change the command in the config to whatever the name of that colorscheme is.
-    --
-    -- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`.
-    'folke/tokyonight.nvim',
-    priority = 1000,
-    enabled = false,
   },
 
   { -- Collection of various small independent plugins/modules
@@ -1041,28 +1159,6 @@ require('lazy').setup({
           scope_incremental = 'grs',
         },
       },
-      textobjects = {
-        select = {
-          enable = true,
-          lookahead = true,
-          keymaps = {
-            ['af'] = '@function.outer',
-            ['if'] = '@function.inner',
-            ['ac'] = '@class.outer',
-            ['ic'] = '@class.inner',
-            ['aa'] = '@parameter.outer',
-            ['ia'] = '@parameter.inner',
-          },
-        },
-        move = {
-          enable = true,
-          set_jumps = true,
-          goto_next_start     = { [']f'] = '@function.outer', [']c'] = '@class.outer' },
-          goto_previous_start = { ['[f'] = '@function.outer', ['[c'] = '@class.outer' },
-          goto_next_end       = { [']F'] = '@function.outer', [']C'] = '@class.outer' },
-          goto_previous_end   = { ['[F'] = '@function.outer', ['[C'] = '@class.outer' },
-        },
-      },
     },
     dependencies = {
       'nvim-treesitter/nvim-treesitter-context',
@@ -1084,6 +1180,49 @@ require('lazy').setup({
         local alias = vim.treesitter.get_node_text(node, bufnr):lower()
         metadata['injection.language'] = vim.filetype.match { filename = 'a.' .. alias } or alias
       end, { force = true })
+
+      -- nvim-treesitter-textobjects is pinned to its `main` branch (a full
+      -- rewrite) which no longer reads select/move keymaps from opts above
+      -- -- it only takes lookahead/set_jumps -- so keymaps must be wired up
+      -- by hand against its new function-based API.
+      require('nvim-treesitter-textobjects').setup {
+        select = { lookahead = true },
+        move = { set_jumps = true },
+      }
+
+      local select = require 'nvim-treesitter-textobjects.select'
+      local move = require 'nvim-treesitter-textobjects.move'
+
+      local select_keymaps = {
+        af = '@function.outer',
+        ['if'] = '@function.inner',
+        ac = '@class.outer',
+        ic = '@class.inner',
+        aa = '@parameter.outer',
+        ia = '@parameter.inner',
+      }
+      for lhs, query in pairs(select_keymaps) do
+        vim.keymap.set({ 'x', 'o' }, lhs, function()
+          select.select_textobject(query, 'textobjects')
+        end, { desc = 'Select ' .. query })
+      end
+
+      local move_keymaps = {
+        [']f'] = { move.goto_next_start, '@function.outer', 'Next function start' },
+        [']c'] = { move.goto_next_start, '@class.outer', 'Next class start' },
+        ['[f'] = { move.goto_previous_start, '@function.outer', 'Previous function start' },
+        ['[c'] = { move.goto_previous_start, '@class.outer', 'Previous class start' },
+        [']F'] = { move.goto_next_end, '@function.outer', 'Next function end' },
+        [']C'] = { move.goto_next_end, '@class.outer', 'Next class end' },
+        ['[F'] = { move.goto_previous_end, '@function.outer', 'Previous function end' },
+        ['[C'] = { move.goto_previous_end, '@class.outer', 'Previous class end' },
+      }
+      for lhs, spec in pairs(move_keymaps) do
+        local fn, query, desc = spec[1], spec[2], spec[3]
+        vim.keymap.set({ 'n', 'x', 'o' }, lhs, function()
+          fn(query, 'textobjects')
+        end, { desc = desc })
+      end
     end,
     --
     --    - Incremental selection: Included, see `:help nvim-treesitter-incremental-selection-mod`

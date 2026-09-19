@@ -33,7 +33,7 @@ Built on [kickstart.nvim](https://github.com/nvim-lua/kickstart.nvim) using `laz
 - `nvim/lua/custom/plugins/init.lua` — custom plugins (bufferline, lualine, neo-tree, snacks, diffview, etc.)
 - `nvim/lua/kickstart/plugins/` — kickstart-provided plugins (telescope, gitsigns, lint, autopairs, etc.)
 
-Key plugins: telescope (file/grep search), neo-tree (file explorer, opens on right), bufferline, snacks.nvim (floating terminal via `<leader>t` / `<C-t>`), nvim-ufo (folding), persistence.nvim (session restore), supermaven (AI completion), catppuccin theme.
+Key plugins: telescope (file/grep search), neo-tree (file explorer, opens on right), bufferline, snacks.nvim (floating terminal via `<leader>t` / `<C-t>`), nvim-ufo (folding), persistence.nvim (session restore), supermaven (AI completion), OceanicNext theme.
 
 On `VimEnter` with no args: restores previous session via persistence.nvim and opens neo-tree automatically.
 

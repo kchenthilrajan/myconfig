@@ -10,7 +10,29 @@ return {
     'akinsho/bufferline.nvim',
     version = '*',
     dependencies = 'nvim-tree/nvim-web-devicons',
-    opts = {},
+    -- Give the active buffer a solid, boxed-in look (OceanicNext's
+    -- CursorLine shade + accent-blue indicator bar) instead of the default
+    -- italic-only distinction, so it reads clearly at a glance.
+    opts = {
+      options = {
+        indicator = { icon = '▎', style = 'icon' },
+      },
+      highlights = {
+        fill = { bg = '#1b2b34' },
+        background = { bg = '#1b2b34', fg = '#65737e' },
+        buffer_visible = { bg = '#1b2b34', fg = '#65737e' },
+        buffer_selected = { bg = '#343d46', fg = '#d8dee9', bold = true, italic = false },
+        separator = { bg = '#1b2b34', fg = '#1b2b34' },
+        separator_selected = { bg = '#343d46', fg = '#1b2b34' },
+        indicator_selected = { bg = '#343d46', fg = '#6699cc' },
+        modified = { bg = '#1b2b34' },
+        modified_selected = { bg = '#343d46' },
+        close_button = { bg = '#1b2b34' },
+        close_button_selected = { bg = '#343d46' },
+        numbers = { bg = '#1b2b34' },
+        numbers_selected = { bg = '#343d46', bold = true },
+      },
+    },
   },
   {
     'nvim-lualine/lualine.nvim',
@@ -105,6 +127,14 @@ return {
       }
       require('ufo').setup {
         provider_selector = function(bufnr, filetype, buftype)
+          -- ufo's treesitter provider is coarse for markup (HTML/CSS fold
+          -- all-or-nothing). Return '' to disable ufo for these filetypes so
+          -- Neovim's native treesitter folding (granular) takes over — see
+          -- the FileType autocmd in custom/keymaps.lua.
+          local use_native = { html = true, css = true, scss = true, less = true, xml = true }
+          if use_native[filetype] then
+            return ''
+          end
           return { 'treesitter', 'indent' }
         end,
       }
@@ -134,30 +164,14 @@ return {
       vim.keymap.set('n', '<C-4>', function() harpoon:list():select(4) end, { desc = 'Harpoon file 4' })
     end,
   },
-  -- ── Colorschemes (lazy = false so all appear in :colorscheme / Telescope
-  --    completion; they only apply their highlights when selected) ─────────
-  { 'catppuccin/nvim', name = 'catppuccin', lazy = false },
-  { 'wurli/cobalt.nvim',              lazy = false },
-  { 'silentium-theme/silentium.nvim', lazy = false },
-  { 'navarasu/onedark.nvim',          lazy = false, opts = { style = 'deep' } },
-  { 'ray-x/aurora',                   lazy = false },
-  { 'marko-cerovac/material.nvim',    lazy = false, config = function() vim.g.material_style = 'darker' end },
-  { 'yonatanperel/lake-dweller.nvim', lazy = false, config = function() require('lake-dweller').setup { variant = 'ocean-dweller' } end },
-  { 'tpope/vim-vividchalk',           lazy = false },
-  { 'christerso/voidlight-lazyvim-theme', lazy = false },
-  { 'f4z3r/gruvbox-material.nvim',    lazy = false },
-  { 'mhartington/oceanic-next',       lazy = false },                          -- :colorscheme OceanicNext
-  { 'Shatur/neovim-ayu',              lazy = false, name = 'ayu' },             -- :colorscheme ayu
-  { 'ellisonleao/gruvbox.nvim',       lazy = false },                          -- :colorscheme gruvbox
-  { 'srcery-colors/srcery-vim',       lazy = false, init = function() vim.g.srcery_italic = 0 end }, -- :colorscheme srcery
   -- ── Active colorscheme ───────────────────────────────────────────────
   {
-    'Abstract-IDE/Abstract-cs',
+    'mhartington/oceanic-next',
     priority = 1000,
     lazy = false,
     config = function()
-      vim.cmd.colorscheme 'abscs'
-      vim.opt.cursorline = true -- let abscs define CursorLine / CursorLineNr colors
+      vim.cmd.colorscheme 'OceanicNext'
+      vim.opt.cursorline = true
     end,
   },
   {
@@ -172,7 +186,10 @@ return {
     priority = 1000,
     lazy = false,
     opts = {
-      terminal = { enabled = true },
+      terminal = {
+        enabled = true,
+        win = { position = 'bottom' }, -- open the terminal at the bottom of the editor
+      },
       notifier = { enabled = true },
     },
     keys = {
@@ -199,6 +216,31 @@ return {
     ft = { 'markdown' },
     dependencies = { 'nvim-treesitter/nvim-treesitter', 'nvim-tree/nvim-web-devicons' },
     opts = {},
+  },
+  -- Smooth, animated scrolling — makes <C-e>/<C-y> (and <C-d>/<C-u>) glide
+  -- instead of jumping. <C-e>/<C-y> still scroll the view without moving the
+  -- cursor (mouse-wheel feel); hold the key for continuous smooth scroll.
+  {
+    'karb94/neoscroll.nvim',
+    event = 'VeryLazy',
+    config = function()
+      local neoscroll = require 'neoscroll'
+      neoscroll.setup {
+        mappings = { '<C-u>', '<C-d>', '<C-b>', '<C-f>', 'zt', 'zz', 'zb' },
+        hide_cursor = true,
+        stop_eof = true,
+        respect_scrolloff = false,
+        cursor_scrolls_alone = true, -- viewport keeps scrolling at the edge
+        easing = 'sine',
+      }
+      -- Custom <C-e>/<C-y>: ~3 lines per press, cursor stays put, short glide.
+      vim.keymap.set({ 'n', 'v', 'x' }, '<C-e>', function()
+        neoscroll.scroll(3, { move_cursor = false, duration = 90, easing = 'sine' })
+      end, { desc = 'Smooth scroll view down' })
+      vim.keymap.set({ 'n', 'v', 'x' }, '<C-y>', function()
+        neoscroll.scroll(-3, { move_cursor = false, duration = 90, easing = 'sine' })
+      end, { desc = 'Smooth scroll view up' })
+    end,
   },
   {
     'lervag/vimtex',

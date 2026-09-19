@@ -96,6 +96,23 @@
 | `grt`          | Go to type definition           |
 | `<leader>th`   | Toggle inlay hints              |
 
+## Completion (blink.cmp)
+| Key            | Action                          |
+|----------------|----------------------------------|
+| `Ctrl+y`       | Accept selected completion       |
+| `Ctrl+n`       | Select next item                 |
+| `Ctrl+p`       | Select previous item              |
+| `Ctrl+space`   | Open menu / show docs             |
+| `Ctrl+e`       | Dismiss menu                      |
+| `Ctrl+k`       | Toggle signature help             |
+
+## Jumplist (back/forward, works across files)
+| Key            | Action                                          |
+|----------------|--------------------------------------------------|
+| `Ctrl+o`       | Jump back to previous position                   |
+| `Ctrl+i`       | Jump forward again                                |
+| `:jumps`       | List full jump history                            |
+
 ## Formatting
 | Key          | Action                        |
 |--------------|-------------------------------|
@@ -271,3 +288,81 @@
 |------------------|-------------------------------|
 | `<Esc>`          | Clear search highlight        |
 | `<Esc><Esc>`     | Exit terminal insert mode (see Snacks Terminal section for full terminal shortcuts) |
+
+## Math Notation (built-in digraphs — insert mode, `Ctrl-K` then the 2-char code)
+No plugin, no restart, no file-type requirement — this is core Vim, works in any buffer.
+Note: `<C-k>` in insert mode is used by blink.cmp for signature-help toggle; it's been freed up
+in this config (signature help moved to `<C-j>`) so the digraph below fires normally. Full table: `:digraphs`.
+
+**Greek letters**
+| Code   | Result | Code   | Result | Code   | Result |
+|--------|--------|--------|--------|--------|--------|
+| `a*`   | α      | `b*`   | β      | `g*`   | γ      |
+| `d*`   | δ      | `D*`   | Δ      | `e*`   | ε      |
+| `h*`   | θ      | `H*`   | Θ      | `l*`   | λ      |
+| `L*`   | Λ      | `m*`   | μ      | `p*`   | π      |
+| `r*`   | ρ      | `S*`   | Σ (letter) | `t*` | τ      |
+| `f*`   | φ      | `F*`   | Φ      | `w*`   | ω      |
+| `W*`   | Ω      | `x*`   | χ      | `q*`   | ψ      |
+
+**Calculus / operators**
+| Code   | Result | Meaning                      |
+|--------|--------|-------------------------------|
+| `+Z`   | ∑      | summation (N-ary, not the Greek letter) |
+| `*P`   | ∏      | product                       |
+| `In`   | ∫      | integral                      |
+| `dP`   | ∂      | partial derivative            |
+| `NB`   | ∇      | nabla / gradient              |
+| `RT`   | √      | square root                   |
+| `00`   | ∞      | infinity                      |
+| `/f`   | ⁄      | fraction slash (typeset `/`)  |
+
+**Set / logic**
+| Code   | Result | Code   | Result | Code   | Result |
+|--------|--------|--------|--------|--------|--------|
+| `(-`   | ∈      | `/0`   | ∅      | `FA`   | ∀      |
+| `(C`   | ⊂      | `(_`   | ⊆      | `TE`   | ∃      |
+| `)U`   | ∪      | `(U`   | ∩      | `AN`   | ∧      |
+| `-,`   | ¬      | `OR`   | ∨      | `-T`   | ⊥      |
+
+**Comparison / arrows**
+| Code   | Result | Code   | Result | Code   | Result |
+|--------|--------|--------|--------|--------|--------|
+| `!=`   | ≠      | `=<`   | ≤      | `>=`   | ≥      |
+| `=3`   | ≡      | `?2`   | ≈      | `0(`   | ∝      |
+| `->`   | →      | `<>`   | ↔      | `=>`   | ⇒      |
+| `+-`   | ±      | `/\`   | ×      | `-:`   | ÷      |
+
+**Superscript / subscript**
+| Code        | Result       | Notes                          |
+|-------------|--------------|----------------------------------|
+| `11` `22` `33` | ¹ ² ³     | the three irregular ones          |
+| `4S`…`9S`, `0S` | ⁴…⁹, ⁰    | superscript digits 4–9, 0         |
+| `+S` `-S`       | ⁺ ⁻       | superscript plus / minus          |
+| `aS`…`zS` (no `q`) | ᵃᵇᶜᵈᵉᶠᵍʰⁱʲᵏˡᵐⁿᵒᵖʳˢᵗᵘᵛʷˣʸᶻ | full superscript alphabet — custom digraphs, added in `custom/keymaps.lua` (`n` alone, `nS`, was stock Vim; the rest is this config's addition; `q` has no Unicode superscript form) |
+| `0s`…`9s`       | ₀…₉       | subscript digits (lowercase `s`)  |
+| — | — | no subscript letters exist in Unicode, only digits |
+
+**Precomposed fractions** (fixed set only — no arbitrary `x/y` as one glyph; see below)
+| Code | Result | Code | Result | Code | Result | Code | Result |
+|------|--------|------|--------|------|--------|------|--------|
+| `12` | ½      | `13` | ⅓      | `23` | ⅔      | `14` | ¼      |
+| `34` | ¾      | `15` | ⅕      | `25` | ⅖      | `35` | ⅗      |
+| `45` | ⅘      | `16` | ⅙      | `56` | ⅚      | `18` | ⅛      |
+| `38` | ⅜      | `58` | ⅝      | `78` | ⅞      |      |        |
+
+**Misc**
+| Code   | Result | Meaning        |
+|--------|--------|----------------|
+| `~o`   | °      | degree         |
+| `1'`   | ′      | prime          |
+| `2'`   | ″      | double prime   |
+| `hh`   | ─      | horizontal bar (box-drawing; useful for a stacked `x / ─── / y` fraction across two lines) |
+
+For a real `x/y` with a horizontal bar (not one of the fixed fraction glyphs), stack it across
+two lines instead — Unicode has no generative fraction-bar character:
+```
+x
+───
+y
+```
