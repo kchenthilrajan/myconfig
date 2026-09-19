@@ -201,6 +201,7 @@ alias shell-cmds="_ref_file ~/myconfig/refs/shell-commands.md"
 alias shell-ex="_ref_file ~/myconfig/refs/shell-exercises.md"
 alias docker-keys="_ref_file ~/myconfig/refs/docker-shortcuts.md"
 alias proj="_ref_file ~/myconfig/refs/project-workflows.md"
+alias mpv-keys="_ref_file ~/myconfig/refs/mpv-shortcuts.md"
 
 prep-ref() {
   local reset="\e[0m"
@@ -227,8 +228,8 @@ prep-ref() {
 unalias ref 2>/dev/null
 ref() {
   local -a labels colors files
-  labels=(nvim        tmux        shell       consolidated cli-nav     docker      projects   )
-  colors=("\e[35m"    "\e[32m"    "\e[33m"    "\e[34m"     "\e[31m"    "\e[36m"    "\e[93m"   )
+  labels=(nvim        tmux        shell       consolidated cli-nav     docker      projects     mpv        )
+  colors=("\e[35m"    "\e[32m"    "\e[33m"    "\e[34m"     "\e[31m"    "\e[36m"    "\e[93m"     "\e[92m"   )
   files=(
     ~/myconfig/refs/nvim-shortcuts.md
     ~/myconfig/refs/tmux-shortcuts.md
@@ -237,6 +238,7 @@ ref() {
     ~/myconfig/refs/cli_navigate_keyboard_shortcuts
     ~/myconfig/refs/docker-shortcuts.md
     ~/myconfig/refs/project-workflows.md
+    ~/myconfig/refs/mpv-shortcuts.md
   )
   local reset="\e[0m"
   {
@@ -283,6 +285,60 @@ lc() {
   echo ""
   awk -v n="$num " '/^## LC-/{if(f)exit} index($0,n)&&/^## LC-/{f=1} f' "$file"
   echo ""
+}
+
+# Consolidated solutions — fuzzy-search by "LC N — Title", preview shows the
+# WHOLE solution section (trigger/invariant/code), bounded by the next heading.
+sol() {
+  local file="$HOME/interview-company-wise-problems/master/solutions_compendium.md"
+  [[ ! -f "$file" ]] && echo "Not found: $file" && return 1
+  local selection
+  selection=$(grep -E "^## LC " "$file" | sed 's/^## //' | \
+    fzf --prompt="sol> " --ansi --height=90% \
+      --preview "
+        num=\$(echo {} | grep -oE 'LC [0-9]+' | grep -oE '[0-9]+')
+        awk -v n=\"\$num\" '(/^# /||/^## /){if(f)exit} \$0 ~ (\"^## LC \" n \" \"){f=1} f' \"$file\"
+      " \
+      --preview-window=right:65%:wrap)
+  [[ -z "$selection" ]] && return
+  local num=$(echo "$selection" | grep -oE 'LC [0-9]+' | grep -oE '[0-9]+')
+  echo ""
+  awk -v n="$num" '(/^# /||/^## /){if(f)exit} $0 ~ ("^## LC " n " "){f=1} f' "$file"
+  echo ""
+}
+
+# Search downloaded YouTube caption transcripts (.vtt) and jump straight to
+# that moment in mpv. Default dir is ~/sysdesign-videos; pass a second arg to
+# point at a different video folder.
+vsearch() {
+  local query="$1"
+  local dir="${2:-$HOME/sysdesign-videos}"
+  [[ -z "$query" ]] && { echo "Usage: vsearch <term> [dir]"; return 1; }
+  [[ ! -d "$dir" ]] && { echo "Not found: $dir"; return 1; }
+
+  local script="$HOME/myconfig/scripts/vtt-search.py"
+  local selection
+  selection=$(python3 "$script" search "$dir" "$query" | \
+    while IFS=$'\t' read -r base ts text; do
+      local short="${base#*- }"                     # drop "NN - " / "YYYYMMDD - " prefix
+      (( ${#short} > 40 )) && short="${short:0:37}..."
+      printf '%s\t%s\t%s\t%-40s\n' "$base" "$ts" "$text" "$short"
+    done | \
+    fzf --delimiter=$'\t' --with-nth=4,2,3 \
+      --prompt="vid> " --height=90% \
+      --preview "python3 \"$script\" context \"$dir\" {1} {2}" \
+      --preview-window=right:60%:wrap)
+  [[ -z "$selection" ]] && return
+
+  local base ts video_file
+  base=$(echo "$selection" | cut -f1)
+  ts=$(echo "$selection" | cut -f2)
+  video_file=$(find "$dir" -maxdepth 1 -type f -iname "${base}.*" ! -iname "*.vtt" | head -1)
+  if [[ -z "$video_file" ]]; then
+    echo "Video file not found for: $base"
+    return 1
+  fi
+  mpv --start="$ts" "$video_file"
 }
 
 mdview() {
@@ -383,6 +439,58 @@ y() {
   IFS= read -r -d '' cwd < "$tmp"
   [[ -n "$cwd" && "$cwd" != "$PWD" ]] && builtin cd -- "$cwd"
   rm -f -- "$tmp"
+}
+
+# Pull a resume + its JD into the current directory by company name.
+# Looks up ~/resume/resume_<slug>.pdf, reads the matching tailored_<slug>.json
+# for _meta.job_id, and copies the corresponding jd_screenshots/jd_li<job_id>.txt
+# (falling back to jd_<slug>.txt if no job_id was captured for that application).
+resume-pull() {
+  local query="$1"
+  [[ -z "$query" ]] && { echo "Usage: resume-pull <company>"; return 1; }
+
+  local -a matches
+  matches=(${(f)"$(ls ~/resume | grep -i "^resume_.*${query}.*\.pdf$")"})
+
+  if [[ ${#matches[@]} -eq 0 ]]; then
+    echo "No resume found matching: $query"
+    return 1
+  fi
+
+  local chosen
+  if [[ ${#matches[@]} -eq 1 ]]; then
+    chosen="${matches[1]}"
+  else
+    chosen=$(printf '%s\n' "${matches[@]}" | fzf --prompt="resume> " --height=40%)
+    [[ -z "$chosen" ]] && return 1
+  fi
+
+  local slug="${chosen#resume_}"
+  slug="${slug%.pdf}"
+
+  cp "$HOME/resume/$chosen" .
+  echo "Copied: $chosen"
+
+  local tailored_json="$HOME/resume/tailored_${slug}.json"
+  local job_id=""
+  if [[ -f "$tailored_json" ]]; then
+    job_id=$(python3 -c "import json; print(json.load(open('$tailored_json')).get('_meta',{}).get('job_id',''))" 2>/dev/null)
+  fi
+
+  local jd_src=""
+  if [[ -n "$job_id" && -f "$HOME/resume/jd_screenshots/jd_li${job_id}.txt" ]]; then
+    jd_src="$HOME/resume/jd_screenshots/jd_li${job_id}.txt"
+  elif [[ -f "$HOME/resume/jd_screenshots/jd_${slug}.txt" ]]; then
+    jd_src="$HOME/resume/jd_screenshots/jd_${slug}.txt"
+  fi
+
+  if [[ -n "$jd_src" ]]; then
+    local jd_dest="jd_${slug}.txt"
+    cp "$jd_src" "$jd_dest"
+    echo "Copied: $jd_dest (job_id: ${job_id:-n/a})"
+  else
+    echo "No JD file found (job_id: ${job_id:-none captured in tailored json})"
+  fi
 }
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
