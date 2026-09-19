@@ -1,0 +1,70 @@
+# macOS-only formulas and casks. Installed by setup.sh in addition to the
+# shared Brewfile — on Linux, the equivalents install natively via apt
+# instead (see setup.sh and README's "Linux (Mint) notes").
+
+tap "zegervdv/zathura"
+
+# PDF / docs
+brew "zegervdv/zathura/zathura"
+brew "zegervdv/zathura/zathura-pdf-poppler"
+
+# Docker daemon — colima runs it in a lightweight Linux VM on macOS
+brew "colima"
+brew "docker"
+
+# Fonts (Nerd Fonts for nvim icons)
+cask "font-hack-nerd-font"
+cask "font-jetbrains-mono-nerd-font"
+cask "font-meslo-lg-nerd-font"
+cask "font-roboto"
+cask "font-source-code-pro"
+cask "font-source-sans-3"
+
+# Apps
+cask "iterm2"
+cask "skim"
+cask "mactex"
+
+# Java SDKs
+cask "zulu@8"
+cask "zulu@11"
+cask "zulu@21"
+
+# Docker / Java build tooling — macOS-side only (Linux gets these via apt in setup.sh)
+brew "docker-compose"
+brew "openjdk@11"
+brew "ant"
+brew "maven"
+brew "gwt"
+
+# macOS-only: pbcopy shim for tmux
+brew "reattach-to-user-namespace"
+
+# Firefox
+cask "firefox"
+
+# Extra CLI tools installed on this Mac. NOT verified to install on Linuxbrew,
+# and setup.sh runs with `set -e`, so they stay out of the shared Brewfile until
+# each is confirmed on Mint (then move the line up to Brewfile).
+brew "automake"
+brew "bash"
+brew "dos2unix"
+brew "foremost"
+brew "gifsicle"
+brew "id3v2"
+brew "imagemagick"
+brew "jpeg-xl"
+brew "libraw"
+brew "llm"
+brew "make"
+brew "nasm"
+brew "opencode"
+brew "pandoc"
+brew "pdftk-java"
+brew "recoverjpeg"
+brew "shared-mime-info"
+brew "sleuthkit"
+brew "testdisk"
+brew "unbound"
+brew "wget"
+# gemini-cli omitted: deprecated upstream, disabled 2026-12-18 (would break brew bundle).

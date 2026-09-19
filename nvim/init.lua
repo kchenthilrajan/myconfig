@@ -864,7 +864,8 @@ require('lazy').setup({
           -- Zulu 11 in zshrc for Maven builds elsewhere, so override just
           -- for this server process.
           cmd_env = {
-            JAVA_HOME = '/Library/Java/JavaVirtualMachines/zulu-21.jdk/Contents/Home',
+            JAVA_HOME = vim.fn.has 'mac' == 1 and '/Library/Java/JavaVirtualMachines/zulu-21.jdk/Contents/Home'
+              or vim.fn.glob('/usr/lib/jvm/java-21-openjdk-*', false, true)[1],
           },
         },
 

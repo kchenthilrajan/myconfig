@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-Personal dotfiles for macOS — Neovim, tmux, Zsh, and iTerm2. All configs are symlinked from here to their expected locations. Changes here take effect via symlinks immediately (no deploy step needed), except nvim which requires restarting nvim or `:source`.
+Personal dotfiles for macOS and Linux (Mint) — Neovim, tmux, and Zsh. All configs are symlinked from here to their expected locations. Changes here take effect via symlinks immediately (no deploy step needed), except nvim which requires restarting nvim or `:source`.
+
+Package installation is Homebrew-based on both OSes (see `Brewfile`). `brew bundle` here doesn't support `on_macos`/`on_linux` DSL blocks, so macOS-only formulas/casks live in a separate `Brewfile.macos`, installed by `setup.sh` only when `[[ "$OS" == "Darwin" ]]`. Linux-only extras Homebrew casks can't provide — Docker Engine, zathura, Nerd Fonts, a JDK, LaTeX — install via `apt` in `setup.sh` instead, gated on `[[ "$OS" == "Linux" ]]`. Anywhere a config file branches on OS (PATH setup in `zshrc`, clipboard/`open` in the `mdf`/`mdview` functions), it checks `$OSTYPE`.
 
 ## Symlink layout
 
@@ -42,7 +44,6 @@ On `VimEnter` with no args: restores previous session via persistence.nvim and o
 - **`fz <file>` or `cmd | fz`** — fuzzy search any file or piped input with a right-side preview pane (±15 lines context)
 - **`ref`** — unified fuzzy search across all shortcut reference files at `~/backup/`, color-coded by source
 - **`_ref_file <file>`** — underlying helper used by per-topic aliases
-- **`iterm-alpha <0-1>`** — set iTerm2 transparency via osascript
 
 Per-topic shortcut aliases: `nvim-keys`, `tmux-keys`, `shell-cmds`, `shell-ex`, `docker-keys` — each opens the relevant `~/backup/*-shortcuts.md` in fzf with preview.
 
@@ -66,8 +67,7 @@ Stored at `~/backup/` (not in this repo — personal machine only):
 - Plugin manager: tpm. Plugins: catppuccin theme, tmux-yank, tmux-resurrect, tmux-continuum (auto-restore on)
 - Pane navigation: `Ctrl+b` + arrow keys or vim-style `h/j/k/l`
 
-## iTerm2
+## Terminal
 
-- `transparent` / `opaque` aliases control window transparency
-- Password Manager: `Window > Password Manager`, can be triggered on password prompts via `Settings > Profiles > Advanced > Triggers`
+- macOS: iTerm2. Linux: gnome-terminal — no transparency alias or trigger-based password manager equivalent exists there, so `iterm-alpha` and the `transparent`/`opaque` aliases are defined only on macOS (guarded in `zshrc`).
 - Terminal type is `xterm-256color` — ncurses apps inside tmux need `TERM=xterm-256color`
