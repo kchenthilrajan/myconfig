@@ -19,6 +19,20 @@ Prefix key: `Ctrl+b` (press before every shortcut)
 
 ---
 
+## Session Tree View (`Ctrl+b s`)
+
+Opens the sorted session list (`choose-tree -sZ -O name`). Keys below apply while that list is open.
+
+| Action                        | Shortcut          |
+|-------------------------------|-------------------|
+| Move selection                | `↑/↓` or `j/k`    |
+| Switch to selected session    | `Enter`           |
+| Kill selected session         | `x` then `y` to confirm |
+| Tag selected session          | `t`               |
+| Exit without selecting        | `q`               |
+
+---
+
 ## Windows (Tabs)
 
 | Action                        | Shortcut          |
