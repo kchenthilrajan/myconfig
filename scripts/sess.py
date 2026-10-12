@@ -11,6 +11,8 @@ Built so a word-hunt in one session can be handed to another without re-explaini
     sess chop 3a09             list every turn in that session, numbered (pipe into `fz` to browse)
     sess chop 3a09 12-27       extract turns 12-27 as a seed, print + copy to clipboard —
                                 paste as the opening message of a new, isolated-context session
+    sess thread 'sudoku|LC ?37' --project interview-company-wise-problems/master --out t.md
+                               every matching turn across sessions, verbatim, time-ordered, ±3 turns context
 
 Reads ~/.claude/projects/<project>/<session-id>.jsonl (stdlib only, read-only).
 Only human and assistant text is shown; tool calls, tool output and system records are skipped.
@@ -321,6 +323,110 @@ def cmd_chop(a):
             pass
 
 
+def session_turns(path):
+    """Text turns of one session, numbered exactly like `sess chop` (1-based, summaries skipped).
+    Each turn: (n, role, ts, text, uuid, images)."""
+    out = []
+    for d in records(path):
+        t = text_of(d)
+        if not t or is_summary(t):
+            continue
+        c = (d.get("message") or {}).get("content")
+        imgs = sum(1 for b in c if isinstance(b, dict) and b.get("type") == "image") if isinstance(c, list) else 0
+        out.append((len(out) + 1, d["type"], d.get("timestamp", ""), t, d.get("uuid", ""), imgs))
+    return out
+
+
+def cmd_thread(a):
+    """Every turn matching a pattern, across sessions, VERBATIM and in time order, with context.
+    Locates and slices only: nothing is summarized, and the table of contents is the first
+    line of YOUR turns, so no framing is added on top of the conversation."""
+    rx = re.compile(a.pattern, re.I)
+    paths = [p for p in sessions() if not a.project or a.project.lower() in meta(p)["project"].lower()]
+    if a.session:
+        paths = [p for p in paths if any(os.path.basename(p).startswith(s) for s in a.session)]
+    if not paths:
+        sys.exit("sess: no sessions match --project/--session")
+    seen, dup, blocks, info = set(), 0, [], []
+    loaded = [(p, session_turns(p)) for p in paths]
+    # oldest session first: a continued/resumed session replays earlier turns with the same
+    # uuid, and the turn must stay with the session where it was originally said
+    loaded.sort(key=lambda x: x[1][0][2] if x[1] else "")
+    for p, turns in loaded:
+        m = meta(p)
+        keep = []
+        for tr in turns:  # resumed sessions can replay earlier turns; keep each message once
+            if tr[4] and tr[4] in seen:
+                dup += 1
+                continue
+            seen.add(tr[4])
+            keep.append(tr)
+        hits = {i for i, tr in enumerate(keep) if (a.who in ("any", tr[1])) and rx.search(tr[3])}
+        if not hits:
+            continue
+        info.append((m, keep, len(hits)))
+        want = sorted({j for i in hits for j in range(i - a.context, i + a.context + 1) if 0 <= j < len(keep)})
+        run = [want[0]]
+        for j in want[1:]:  # contiguous runs of wanted turns become blocks
+            if j == run[-1] + 1:
+                run.append(j)
+            else:
+                blocks.append((m, keep, run, hits)); run = [j]
+        blocks.append((m, keep, run, hits))
+    if not blocks:
+        sys.exit(f"sess: no turn matches /{a.pattern}/ in {len(paths)} sessions")
+    blocks.sort(key=lambda b: b[1][b[2][0]][2])  # by timestamp of the block's first turn
+
+    L = [f"# THREAD /{a.pattern}/",
+         "",
+         f"- Query: regex `{a.pattern}` (case-insensitive) · context ±{a.context} turns · who: {a.who}"
+         + (f" · project contains `{a.project}`" if a.project else ""),
+         f"- Generated {datetime.now().strftime('%Y-%m-%d %H:%M')} by `sess thread`. Turns are VERBATIM text_of() output "
+         "(tool calls/output, system tags and continuation summaries removed; nothing summarized or reworded).",
+         f"- Turn numbers match `sess chop <session>`. ● = matched the query, ○ = context."
+         + (f" {dup} replayed duplicate turns skipped." if dup else ""),
+         "- Sessions (in time order):"]
+    for m, keep, nh in sorted(info, key=lambda x: x[1][0][2]):
+        L.append(f"  - `{m['id'][:8]}` {m['project']} · {local(keep[0][2])} → {local(keep[-1][2])} · {nh} matching turns of {len(keep)}")
+    L += ["", "## Your turns (first line, verbatim)", ""]
+    for m, keep, run, hits in blocks:
+        for j in run:
+            n, role, ts, t, _, _ = keep[j]
+            if role == "user":
+                first = next((ln.strip() for ln in t.splitlines() if ln.strip()), "")
+                L.append(f"- {'●' if j in hits else '○'} {local(ts)} · `{m['id'][:8]}:t{n}` — {first[:160]}")
+    L += ["", "---", ""]
+    prev = {}
+    for m, keep, run, hits in blocks:
+        sid = m["id"]
+        last = prev.get(sid)
+        start_n, end_n = keep[run[0]][0], keep[run[-1]][0]
+        if last is not None and start_n > last + 1:
+            L.append(f"> … {start_n - last - 1} turns of `{sid[:8]}` not shown (t{last + 1}–t{start_n - 1}) — `sess chop {sid[:8]} {last + 1}-{start_n - 1}`\n")
+        elif last is None and start_n > 1:
+            L.append(f"> … `{sid[:8]}` t1–t{start_n - 1} not shown\n")
+        L.append(f"## `{sid[:8]}` · {local(keep[run[0]][2])} · t{start_n}–t{end_n}\n")
+        for j in run:
+            n, role, ts, t, uuid, imgs = keep[j]
+            who = "YOU" if role == "user" else "CLAUDE"
+            mark = "●" if j in hits else "○"
+            img = f" · (+{imgs} image{'s' if imgs > 1 else ''} not shown)" if imgs else ""
+            L.append(f"### {mark} {who} · {local(ts)} · `{sid[:8]}:t{n}`{img}\n<!-- uuid:{uuid} -->\n")
+            L.append(t)
+            L.append("")
+        prev[sid] = end_n
+    out = "\n".join(L) + "\n"
+    if a.out:
+        os.makedirs(os.path.dirname(os.path.abspath(a.out)), exist_ok=True)
+        with open(a.out, "w") as f:
+            f.write(out)
+        nturns = sum(len(b[2]) for b in blocks)
+        print(f"# {sum(x[2] for x in info)} matching turns, {nturns} turns shown in {len(blocks)} blocks "
+              f"from {len(info)} sessions → {a.out}")
+    else:
+        print(out)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -350,6 +456,14 @@ def main():
     s = sub.add_parser("sections", help="table of contents: list only the § Section markers in a session")
     s.add_argument("session", help="@N, id prefix, or name/project text")
     s.set_defaults(f=cmd_sections)
+    th = sub.add_parser("thread", help="every matching turn across sessions, verbatim, in time order, with context")
+    th.add_argument("pattern", help="regex, case-insensitive, e.g. 'sudoku|LC ?37|isValid'")
+    th.add_argument("--project", help="only sessions whose project path contains this text")
+    th.add_argument("--session", nargs="+", help="only these session id prefixes")
+    th.add_argument("--context", type=int, default=3, help="turns shown before/after each match (default 3)")
+    th.add_argument("--who", choices=["any", "user", "assistant"], default="any", help="whose turns can match")
+    th.add_argument("--out", help="write to this file instead of stdout")
+    th.set_defaults(f=cmd_thread)
     a = ap.parse_args(); a.f(a)
 
 
