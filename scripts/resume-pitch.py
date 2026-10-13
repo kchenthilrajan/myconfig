@@ -27,6 +27,17 @@ import subprocess
 import sys
 
 VOICE = os.path.expanduser("~/experience-narrative/bullets/voice-rewrite.md")
+# The candidate's own answer to "why leaving" — pasted VERBATIM into every pitch; the model only
+# adds a one-sentence tie-in to the JD. Missing file → the model writes a forward-looking answer.
+WHY_LEAVING = os.path.expanduser(os.environ.get("RESUME_PITCH_WHY_LEAVING", "~/resume/why_leaving.txt"))
+
+STEP4_FIXED = """4. "why_leaving" is FIXED - the candidate's own words, pasted by the script (do NOT rewrite it):
+   "{text}"
+   Return "why_leaving_tiein": ONE sentence (max 30 words) linking that reason to this JD's concrete
+   problems (e.g. what they are building that is still at the build-and-ship stage). Add NO new facts
+   about the candidate or their employer."""
+STEP4_FREE = """4. Write "why_leaving" (2-3 sentences) FORWARD-LOOKING: what the candidate wants to do next and why
+   this role fits. State NO facts about the current employer or the reason for leaving."""
 
 
 def numbered_resume(resume):
@@ -57,8 +68,7 @@ Follow this method exactly:
 2. Match each problem to the single best resume bullet by its ID (e.g. "E1.B3"). If nothing in the
    resume genuinely matches, use null - do NOT force a match.
 3. Write "intro" (60-90 words, first person, spoken) from the TOP 2 matches only.
-4. Write "why_leaving" (2-3 sentences) FORWARD-LOOKING: what the candidate wants to do next and why
-   this role fits. State NO facts about the current employer or the reason for leaving.
+{step4}
 5. Write "why_us" (3-5 sentences): each sentence = one of THEIR problems -> the candidate's matching
    experience (from a matched bullet).
 Rules: never invent experience, employers, tools or numbers; only use numbers that appear in the
@@ -69,7 +79,8 @@ Return ONLY a JSON object, no prose, no code fence:
 {"company": str, "role": str,
  "problems": [{"jd_quote": str, "bullet_id": str|null, "why": str (one short line: the overlap)}],
  "top2": [bullet_id, bullet_id],
- "intro": str, "why_leaving": str, "why_us": str}
+ "intro": str, "why_leaving": str (only if step 4 asks for it), "why_leaving_tiein": str (only if
+ step 4 asks for it), "why_us": str}
 
 STYLE RULES:
 {voice}
@@ -108,7 +119,7 @@ def numbers(s):
     return set(re.findall(r"\d[\d,.]*\+?%?", s))
 
 
-def render(p, by_id, jd, resume_text):
+def render(p, by_id, jd, resume_text, fixed_why=None):
     issues = []
     jdn = norm(jd)
     lines = [f"PITCH — {p.get('role', '')} @ {p.get('company', '')}", "=" * 72, "",
@@ -133,10 +144,18 @@ def render(p, by_id, jd, resume_text):
             lines.append("     YOU: — no direct match in this resume (a gap to prepare for) —")
         lines.append("")
     top2 = [b for b in p.get("top2", []) if b in by_id]
-    lines += ["2. INTRO  (from your top 2 matches: " + ", ".join(top2) + ")", "", "  " + p.get("intro", ""), "",
-              "3. WHY LEAVING  (forward-looking)", "", "  " + p.get("why_leaving", ""), "",
-              "4. WHY US  (their problem → your experience)", "", "  " + p.get("why_us", ""), ""]
-    prose = " ".join(p.get(k, "") for k in ("intro", "why_leaving", "why_us"))
+    lines += ["2. INTRO  (from your top 2 matches: " + ", ".join(top2) + ")", "", "  " + p.get("intro", ""), ""]
+    if fixed_why:
+        tiein = p.get("why_leaving_tiein", "").strip()
+        lines += ["3. WHY LEAVING  (your words, verbatim from why_leaving.txt + a tie-in for this role)", "",
+                  "  " + fixed_why, ""] + ([f"  For {p.get('company', 'this team')}: {tiein}", ""] if tiein else [])
+        if not tiein:
+            issues.append("no tie-in sentence for why leaving (your text is still there)")
+    else:
+        lines += ["3. WHY LEAVING  (forward-looking — add ~/resume/why_leaving.txt to use your own words)", "",
+                  "  " + p.get("why_leaving", ""), ""]
+    lines += ["4. WHY US  (their problem → your experience)", "", "  " + p.get("why_us", ""), ""]
+    prose = " ".join(p.get(k, "") for k in ("intro", "why_leaving", "why_leaving_tiein", "why_us"))
     unknown = sorted(n for n in numbers(prose) if n not in resume_text and n not in jd)
     if unknown:
         issues.append("numbers in the prose that are NOT in the resume or JD: " + ", ".join(unknown))
@@ -161,12 +180,17 @@ def main():
     bullets = numbered_resume(resume)
     by_id = {b[0]: b for b in bullets}
     resume_block = "\n".join(f"[{i}] ({c} — {t}) {x}" if c else f"[{i}] (summary) {x}" for i, c, t, x in bullets)
-    prompt = (PROMPT.replace("{voice}", voice_rules() or "(none)")
+    try:
+        fixed_why = " ".join(open(WHY_LEAVING, encoding="utf-8").read().split()) or None
+    except OSError:
+        fixed_why = None
+    step4 = STEP4_FIXED.replace("{text}", fixed_why) if fixed_why else STEP4_FREE
+    prompt = (PROMPT.replace("{step4}", step4).replace("{voice}", voice_rules() or "(none)")
                     .replace("{jd}", jd).replace("{resume}", resume_block))
     print("resume-pitch: asking claude to match JD problems to resume bullets…", file=sys.stderr)
     p = ask_llm(prompt, a.model)
-    resume_text = json.dumps(resume, ensure_ascii=False)
-    text, issues = render(p, by_id, jd, resume_text)
+    resume_text = json.dumps(resume, ensure_ascii=False) + " " + (fixed_why or "")
+    text, issues = render(p, by_id, jd, resume_text, fixed_why)
     slug = os.path.basename(a.tailored_json)[len("tailored_"):-len(".json")]
     out = a.out or f"pitch_{slug}.txt"
     open(out, "w", encoding="utf-8").write(text)
