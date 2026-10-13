@@ -511,6 +511,10 @@ resume-pull() {
     local jd_dest="jd_${slug}.txt"
     cp "$jd_src" "$jd_dest"
     echo "Copied: $jd_dest (job_id: ${job_id:-n/a})"
+    # pitch_<slug>.txt: JD problems -> resume bullets, intro, why leaving, why us (LLM, checked)
+    if [[ -f "$tailored_json" && -z "$RESUME_PULL_NO_PITCH" ]] && command -v claude >/dev/null; then
+      python3 "$HOME/myconfig/scripts/resume-pitch.py" "$tailored_json" "$jd_dest" -o "pitch_${slug}.txt"
+    fi
   else
     echo "No JD file found (job_id: ${job_id:-none captured in tailored json})"
   fi
