@@ -325,6 +325,10 @@ sol() {
 # Search downloaded YouTube caption transcripts (.vtt) and jump straight to
 # that moment in mpv. Default dir is ~/sysdesign-videos; pass a second arg to
 # point at a different video folder.
+# clip-collect: append several clipboard copies, then paste them all at once
+#   clip-collect start [--sep '---'] → copy (⌘C) from anywhere → clip-collect stop → ⌘V
+alias clip-collect='python3 "$HOME/myconfig/scripts/clip-collect.py"'
+
 vsearch() {
   local query="$1"
   local dir="${2:-$HOME/sysdesign-videos}"
