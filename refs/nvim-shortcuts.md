@@ -294,24 +294,38 @@ No plugin, no restart, no file-type requirement — this is core Vim, works in a
 Note: `<C-k>` in insert mode is used by blink.cmp for signature-help toggle; it's been freed up
 in this config (signature help moved to `<C-j>`) so the digraph below fires normally. Full table: `:digraphs`.
 
-**Greek letters**
-| Code   | Result | Code   | Result | Code   | Result |
-|--------|--------|--------|--------|--------|--------|
-| `a*`   | α      | `b*`   | β      | `g*`   | γ      |
-| `d*`   | δ      | `D*`   | Δ      | `e*`   | ε      |
-| `h*`   | θ      | `H*`   | Θ      | `l*`   | λ      |
-| `L*`   | Λ      | `m*`   | μ      | `p*`   | π      |
-| `r*`   | ρ      | `S*`   | Σ (letter) | `t*` | τ      |
-| `f*`   | φ      | `F*`   | Φ      | `w*`   | ω      |
-| `W*`   | Ω      | `x*`   | χ      | `q*`   | ψ      |
+**Greek letters** (searchable by name — lowercase = lowercase letter, "(capital)" = uppercase)
+| Code   | Result | Name              |
+|--------|--------|-------------------|
+| `a*`   | α      | alpha             |
+| `b*`   | β      | beta              |
+| `g*`   | γ      | gamma             |
+| `d*`   | δ      | delta             |
+| `D*`   | Δ      | delta (capital)   |
+| `e*`   | ε      | epsilon           |
+| `h*`   | θ      | theta             |
+| `H*`   | Θ      | theta (capital)   |
+| `l*`   | λ      | lambda            |
+| `L*`   | Λ      | lambda (capital)  |
+| `m*`   | μ      | mu                |
+| `p*`   | π      | pi                |
+| `r*`   | ρ      | rho               |
+| `S*`   | Σ      | sigma (capital letter — see also ∑ summation below) |
+| `t*`   | τ      | tau               |
+| `f*`   | φ      | phi               |
+| `F*`   | Φ      | phi (capital)     |
+| `w*`   | ω      | omega             |
+| `W*`   | Ω      | omega (capital)   |
+| `x*`   | χ      | chi               |
+| `q*`   | ψ      | psi               |
 
 **Calculus / operators**
 | Code   | Result | Meaning                      |
 |--------|--------|-------------------------------|
-| `+Z`   | ∑      | summation (N-ary, not the Greek letter) |
+| `+Z`   | ∑      | summation, sigma operator (N-ary — not the Greek letter Σ above) |
 | `*P`   | ∏      | product                       |
-| `In`   | ∫      | integral                      |
-| `dP`   | ∂      | partial derivative            |
+| `In`   | ∫      | integral, integration         |
+| `dP`   | ∂      | partial derivative, differentiation |
 | `NB`   | ∇      | nabla / gradient              |
 | `RT`   | √      | square root                   |
 | `00`   | ∞      | infinity                      |
@@ -358,6 +372,18 @@ in this config (signature help moved to `<C-j>`) so the digraph below fires norm
 | `1'`   | ′      | prime          |
 | `2'`   | ″      | double prime   |
 | `hh`   | ─      | horizontal bar (box-drawing; useful for a stacked `x / ─── / y` fraction across two lines) |
+
+**Shapes / box-drawing** (tree/diagram sketches, fold markers, arrows for flow diagrams)
+| Code   | Result | Meaning        |
+|--------|--------|----------------|
+| `vv`   | │      | vertical line (box-drawing) |
+| `Dt`   | ▼      | down triangle  |
+| `UT`   | ▲      | up triangle    |
+| `PR`   | ▶      | right triangle |
+| `PL`   | ◀      | left triangle  |
+| `OS`   | □      | white square (no digraph exists for a solid black ■) |
+| `0M`   | ●      | black circle   |
+| `0m`   | ○      | white circle   |
 
 For a real `x/y` with a horizontal bar (not one of the fixed fraction glyphs), stack it across
 two lines instead — Unicode has no generative fraction-bar character:

@@ -215,6 +215,12 @@ alias shell-ex="_ref_file ~/myconfig/refs/shell-exercises.md"
 alias docker-keys="_ref_file ~/myconfig/refs/docker-shortcuts.md"
 alias proj="_ref_file ~/myconfig/refs/project-workflows.md"
 alias mpv-keys="_ref_file ~/myconfig/refs/mpv-shortcuts.md"
+alias sess-keys="_ref_file ~/myconfig/refs/sess-shortcuts.md"
+alias go-cmds="_ref_file ~/myconfig/refs/go-commands.md"
+alias js-cmds="_ref_file ~/myconfig/refs/js-commands.md"
+alias js-cheat="_ref_file ~/myconfig/refs/js-cheatsheet.md"
+alias go-idioms="_ref_file ~/myconfig/refs/go-idioms.md"
+alias js-idioms="_ref_file ~/myconfig/refs/js-idioms.md"
 
 prep-ref() {
   local reset="\e[0m"
@@ -241,8 +247,8 @@ prep-ref() {
 unalias ref 2>/dev/null
 ref() {
   local -a labels colors files
-  labels=(nvim        tmux        shell       consolidated cli-nav     docker      projects     mpv        )
-  colors=("\e[35m"    "\e[32m"    "\e[33m"    "\e[34m"     "\e[31m"    "\e[36m"    "\e[93m"     "\e[92m"   )
+  labels=(nvim        tmux        shell       consolidated cli-nav     docker      projects     mpv          sess         go-cmds      js-cmds      js-cheat     go-idioms    js-idioms  )
+  colors=("\e[35m"    "\e[32m"    "\e[33m"    "\e[34m"     "\e[31m"    "\e[36m"    "\e[93m"     "\e[92m"     "\e[96m"     "\e[94m"     "\e[95m"     "\e[91m"     "\e[90m"     "\e[97m"   )
   files=(
     ~/myconfig/refs/nvim-shortcuts.md
     ~/myconfig/refs/tmux-shortcuts.md
@@ -252,6 +258,12 @@ ref() {
     ~/myconfig/refs/docker-shortcuts.md
     ~/myconfig/refs/project-workflows.md
     ~/myconfig/refs/mpv-shortcuts.md
+    ~/myconfig/refs/sess-shortcuts.md
+    ~/myconfig/refs/go-commands.md
+    ~/myconfig/refs/js-commands.md
+    ~/myconfig/refs/js-cheatsheet.md
+    ~/myconfig/refs/go-idioms.md
+    ~/myconfig/refs/js-idioms.md
   )
   local reset="\e[0m"
   {
@@ -274,6 +286,32 @@ ref() {
 }
 
 alias nvlc='mpv'
+
+# sess — find and read Claude Code conversations (all sessions, read-only).
+#   sess find <words>          which sessions discussed this (add --any for synonyms/typos)
+#   sess ls                    recent sessions, numbered
+#   sess tail <@N|id|text> [--match <text>]   last turns, or the turns around a match
+# sess - browse/search Claude Code sessions (see scripts/sess.py). `resume` is
+# handled here rather than in the Python script, since a subprocess can't cd
+# its parent shell: this cd's into the session's project dir, then resumes
+# that exact session id (skips claude's generic --resume picker).
+sess() {
+  if [[ "$1" == "resume" ]]; then
+    shift
+    if [[ -z "$1" ]]; then
+      echo "Usage: sess resume <@N|id-prefix|text>"
+      return 1
+    fi
+    local resolved dir id
+    resolved=$(python3 ~/myconfig/scripts/sess.py resolve "$1") || return 1
+    dir="${resolved%%$'\t'*}"
+    id="${resolved##*$'\t'}"
+    cd "$dir" || return 1
+    claude --resume "$id"
+  else
+    python3 ~/myconfig/scripts/sess.py "$@"
+  fi
+}
 
 # iTerm2 transparency control (macOS/iTerm2 only)
 if [[ "$OSTYPE" == darwin* ]]; then
@@ -373,7 +411,7 @@ mdview() {
   fi
   local ext="${file##*.}"
   local tmp="/tmp/mdview_$$.html"
-  local style='<style>body{max-width:860px;margin:40px auto;padding:0 24px;font-family:-apple-system,sans-serif;line-height:1.6;color:#333}body.full{max-width:none;margin:40px 24px}pre{background:#f6f8fa;padding:1em;overflow-x:auto;border-radius:6px}code{background:#f6f8fa;padding:.2em .4em;border-radius:3px}h1,h2,h3{border-bottom:1px solid #eee;padding-bottom:.3em}table{border-collapse:collapse}td,th{border:1px solid #ddd;padding:6px 12px}#toggle{position:fixed;top:12px;right:16px;padding:5px 12px;font-size:13px;cursor:pointer;background:#fff;border:1px solid #ccc;border-radius:6px;z-index:999}</style><button id="toggle" onclick="document.body.classList.toggle('"'"'full'"'"');this.textContent=document.body.classList.contains('"'"'full'"'"')?'"'"'Centered'"'"':'"'"'Full Width'"'"'">Full Width</button>'
+  local style='<style>body{max-width:860px;margin:40px auto;padding:0 24px;font-family:-apple-system,sans-serif;line-height:1.6;color:#333}body.full{max-width:none;margin:40px 24px}pre{background:#f6f8fa;padding:1em;overflow-x:auto;border-radius:6px}code{background:#f6f8fa;padding:.2em .4em;border-radius:3px}h1,h2,h3{border-bottom:1px solid #eee;padding-bottom:.3em}table{border-collapse:collapse}td,th{border:1px solid #ddd;padding:6px 12px}#toggle{position:fixed;top:12px;right:16px;padding:5px 12px;font-size:13px;cursor:pointer;background:#fff;border:1px solid #ccc;border-radius:6px;z-index:999}pre.mermaid{background:none;padding:0;text-align:center}</style><button id="toggle" onclick="document.body.classList.toggle('"'"'full'"'"');this.textContent=document.body.classList.contains('"'"'full'"'"')?'"'"'Centered'"'"':'"'"'Full Width'"'"'">Full Width</button><script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script><script>mermaid.initialize({startOnLoad:true,theme:"neutral"});</script>'
   if [[ "$ext" == "md" ]]; then
     pandoc --standalone -V "header-includes=$style" \
       --metadata title="$(basename "$file")" \
@@ -385,6 +423,24 @@ mdview() {
         --metadata title="$(basename "$file")" \
         -o "$tmp"
   fi
+  # Mermaid.js expects diagram text directly inside <pre class="mermaid">, with
+  # no nested tag — pandoc wraps it in <code> (its normal code-block markup),
+  # which breaks mermaid's parser ("Syntax error in text"). Strip the wrapper,
+  # but only for mermaid blocks specifically (other code blocks use
+  # <code class="sourceCode ...">, which must keep its own closing tag paired).
+  python3 - "$tmp" <<'PYEOF'
+import re, sys
+path = sys.argv[1]
+with open(path, encoding="utf-8") as f:
+    html = f.read()
+html = re.sub(
+    r'<pre class="mermaid"><code>(.*?)</code></pre>',
+    r'<pre class="mermaid">\1</pre>',
+    html, flags=re.DOTALL,
+)
+with open(path, "w", encoding="utf-8") as f:
+    f.write(html)
+PYEOF
   if [[ $generate -eq 1 ]]; then
     echo "$tmp"
   elif [[ $term -eq 1 ]]; then
@@ -511,6 +567,10 @@ resume-pull() {
     local jd_dest="jd_${slug}.txt"
     cp "$jd_src" "$jd_dest"
     echo "Copied: $jd_dest (job_id: ${job_id:-n/a})"
+    # pitch_<slug>.txt: JD problems -> resume bullets, intro, why leaving, why us (LLM, checked)
+    if [[ -f "$tailored_json" && -z "$RESUME_PULL_NO_PITCH" ]] && command -v claude >/dev/null; then
+      python3 "$HOME/myconfig/scripts/resume-pitch.py" "$tailored_json" "$jd_dest" -o "pitch_${slug}.txt"
+    fi
   else
     echo "No JD file found (job_id: ${job_id:-none captured in tailored json})"
   fi
@@ -527,9 +587,16 @@ resume-pull() {
 export _ZO_FZF_OPTS="--no-sort --keep-right --height=40% --info=inline --layout=reverse --exit-0 --select-1 --cycle --delimiter='\t' --preview='\command -p ls -Cp {2..}' --preview-window=down,30%,sharp --bind='ctrl-z:ignore,start:disable-search,j:down,k:up,g:first,G:last,i:enable-search,/:enable-search,esc:transform:[ x\$FZF_INPUT_STATE = xenabled ] && echo disable-search || echo abort'"
 eval "$(zoxide init zsh)"
 
+# Turn off terminal mouse reporting before every prompt. If tmux/nvim dies
+# (or an ssh session drops) with mouse mode on, the terminal keeps sending
+# motion reports like `35;92;35M` that land at the shell as typed garbage.
+_reset_mouse() { printf '\e[?1000l\e[?1002l\e[?1003l\e[?1006l' }
+precmd_functions+=(_reset_mouse)
+
 # bun completions
 [ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
 
 # bun
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
+alias clip-collect='python3 "$HOME/myconfig/scripts/clip-collect.py"'

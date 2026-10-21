@@ -289,4 +289,21 @@ return {
       vim.keymap.set('n', '<leader>ih', '<cmd>IronHide<cr>',   { desc = 'Hide REPL' })
     end,
   },
+
+  { -- Typing-practice dashboard, for accuracy/no-look-at-keyboard drilling
+    'nvzone/typr',
+    dependencies = 'nvzone/volt',
+    opts = {},
+    cmd = { 'Typr', 'TyprStats' },
+  },
+
+  { -- Run a code snippet (incl. fenced ```lang blocks in markdown) and show
+    -- the result as virtual text right under it — :SnipRun / '<,'>SnipRun
+    'michaelb/sniprun',
+    build = 'sh install.sh',
+    opts = {
+      display = { 'VirtualTextOk' },
+    },
+    cmd = { 'SnipRun', 'SnipInfo', 'SnipReset', 'SnipClose' },
+  },
 }
