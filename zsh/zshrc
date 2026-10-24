@@ -322,6 +322,19 @@ if [[ "$OSTYPE" == darwin* ]]; then
   alias opaque='iterm-alpha 0'
 fi
 
+if [[ "$OSTYPE" == linux* ]]; then
+  # brew's glib ships a gsettings with no dconf backend: it silently writes to
+  # ~/.config/glib-2.0/settings/keyfile, which Cinnamon never reads.
+  alias gsettings=/usr/bin/gsettings
+
+  # T2 MacBook dGPU toggle (service installed by setup.sh); each change reboots
+  if [[ -f /etc/systemd/system/amdgpu-off.service ]]; then
+    alias dgpu-off='sudo systemctl enable amdgpu-off.service; sleep 2; sudo reboot'
+    alias dgpu-on='sudo systemctl disable amdgpu-off.service; sleep 2; sudo reboot'
+    alias dgpu-status='sudo cat /sys/kernel/debug/vgaswitcheroo/switch'
+  fi
+fi
+
 lc() {
   local file="$HOME/interview-company-wise-problems/master/lc-problems.md"
   [[ ! -f "$file" ]] && echo "Not found: $file" && return 1
@@ -590,13 +603,9 @@ eval "$(zoxide init zsh)"
 # Turn off terminal mouse reporting before every prompt. If tmux/nvim dies
 # (or an ssh session drops) with mouse mode on, the terminal keeps sending
 # motion reports like `35;92;35M` that land at the shell as typed garbage.
-# Skips the first prompt: p10k's instant prompt is still capturing stdout then
-# (its precmd runs last), so output there triggers its "console output during
-# zsh initialization" warning — and a fresh shell has nothing to reset anyway.
-_reset_mouse() {
-  (( ${+_reset_mouse_armed} )) || { typeset -g _reset_mouse_armed=1; return }
-  printf '\e[?1000l\e[?1002l\e[?1003l\e[?1006l'
-}
+# Writes to /dev/tty, not stdout: p10k instant prompt captures stdout until init
+# finishes, and the first precmd run would trip its "console output" warning.
+_reset_mouse() { printf '\e[?1000l\e[?1002l\e[?1003l\e[?1006l' > /dev/tty }
 precmd_functions+=(_reset_mouse)
 
 # bun completions

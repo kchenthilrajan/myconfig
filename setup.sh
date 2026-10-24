@@ -84,6 +84,58 @@ if [[ "$OS" == "Linux" ]]; then
     fi
   done
   fc-cache -f "$FONT_DIR"
+
+  # T2 MacBookPro16,1: Linux leaves the AMD dGPU driving the panel at ~20 W
+  # idle, and amdgpu has no runtime PM here, so it never sleeps on its own.
+  # Route the panel to the Intel iGPU and power the dGPU off via vgaswitcheroo
+  # at boot (https://wiki.t2linux.org/guides/hybrid-graphics/). Reboot needed.
+  if [[ "$(cat /sys/class/dmi/id/product_name 2>/dev/null)" == "MacBookPro16,1" ]]; then
+    echo "==> T2 MacBook: iGPU as primary, dGPU off at boot"
+    echo "options apple-gmux force_igd=y" | sudo tee /etc/modprobe.d/apple-gmux.conf >/dev/null
+    sudo tee /etc/systemd/system/amdgpu-off.service >/dev/null <<'EOF'
+[Unit]
+Description=Disable AMD dGPU via vgaswitcheroo
+After=systemd-modules-load.service
+Before=display-manager.service
+
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c 'for i in $(seq 1 30); do [ -e /sys/kernel/debug/vgaswitcheroo/switch ] && exec sh -c "echo OFF > /sys/kernel/debug/vgaswitcheroo/switch"; sleep 1; done; exit 1'
+
+[Install]
+WantedBy=multi-user.target
+EOF
+    sudo systemctl daemon-reload
+    sudo systemctl enable amdgpu-off.service
+  fi
+
+  # Mac-style area screenshots in Cinnamon. Full path to gsettings: brew's copy
+  # (first on PATH after shellenv) has no dconf backend and silently no-ops.
+  # Appends to custom-list rather than overwriting it, and skips a shortcut
+  # whose command is already bound. Entries must be named customN — the
+  # Keyboard settings UI parses the number out of each name.
+  if /usr/bin/gsettings list-schemas 2>/dev/null | grep -qx org.cinnamon.desktop.keybindings; then
+    echo "==> Adding Cinnamon screenshot shortcuts"
+    add_cinnamon_shortcut() {
+      local name="$1" cmd="$2" binding="$3"
+      local K=org.cinnamon.desktop.keybindings
+      local P=/org/cinnamon/desktop/keybindings/custom-keybindings
+      local ids id n=0
+      ids=$(/usr/bin/gsettings get $K custom-list | sed -E "s/^@as //; s/,/ /g; s/[]['\"]//g")
+      for id in $ids; do
+        [[ "$(dconf read "$P/$id/command")" == "'$cmd'" ]] && return 0
+      done
+      while [[ " $ids " == *" custom$n "* ]]; do n=$((n + 1)); done
+      dconf write "$P/custom$n/name" "'$name'"
+      dconf write "$P/custom$n/command" "'$cmd'"
+      dconf write "$P/custom$n/binding" "['$binding']"
+      ids="$ids custom$n"
+      /usr/bin/gsettings set $K custom-list "[$(for id in $ids; do printf "'%s'," "$id"; done | sed 's/,$//')]"
+    }
+    add_cinnamon_shortcut 'Area screenshot to clipboard' 'gnome-screenshot -a -c' '<Control><Shift><Super>4'
+    add_cinnamon_shortcut 'Area screenshot to file'      'gnome-screenshot -a'    '<Shift><Super>4'
+  fi
 fi
 
 # 4. Oh My Zsh
@@ -136,5 +188,8 @@ echo "  3. Open tmux and press prefix + I to install tmux plugins"
 echo "  4. Open nvim — Lazy will auto-install plugins on first launch"
 if [[ "$OS" == "Linux" ]]; then
   echo "  5. Log out and back in for Docker group membership to take effect"
+  if [[ "$(cat /sys/class/dmi/id/product_name 2>/dev/null)" == "MacBookPro16,1" ]]; then
+    echo "     (reboot instead: the iGPU/dGPU change only applies at boot)"
+  fi
 fi
 echo "  6. Run 'claude' and log in to authenticate Claude Code"
