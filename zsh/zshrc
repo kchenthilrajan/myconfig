@@ -590,7 +590,13 @@ eval "$(zoxide init zsh)"
 # Turn off terminal mouse reporting before every prompt. If tmux/nvim dies
 # (or an ssh session drops) with mouse mode on, the terminal keeps sending
 # motion reports like `35;92;35M` that land at the shell as typed garbage.
-_reset_mouse() { printf '\e[?1000l\e[?1002l\e[?1003l\e[?1006l' }
+# Skips the first prompt: p10k's instant prompt is still capturing stdout then
+# (its precmd runs last), so output there triggers its "console output during
+# zsh initialization" warning — and a fresh shell has nothing to reset anyway.
+_reset_mouse() {
+  (( ${+_reset_mouse_armed} )) || { typeset -g _reset_mouse_armed=1; return }
+  printf '\e[?1000l\e[?1002l\e[?1003l\e[?1006l'
+}
 precmd_functions+=(_reset_mouse)
 
 # bun completions
